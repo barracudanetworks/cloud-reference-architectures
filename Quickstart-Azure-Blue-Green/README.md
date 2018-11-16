@@ -56,8 +56,8 @@ To deploy via Azure Cloud Shell you can connect via the Azure Portal or directly
 - Start up Azure Cloud Shell from the Azure Portal or go directly to [https://shell.azure.com](https://shell.azure.com/)
 - Download the latest version of the Quickstart templates in the persistant clouddrive and run the deployment script:
 
-    - blue: `cd ~/clouddrive/ && wget -qO- https://github.com/jvhoof/quickstart-blue-green-azure/archive/master.zip | jar xv && cd ~/clouddrive/quickstart-blue-green-azure-master/ && ./deploy.sh -b`
-    - green: `cd ~/clouddrive/ && wget -qO- https://github.com/jvhoof/quickstart-blue-green-azure/archive/master.zip | jar xv && cd ~/clouddrive/quickstart-blue-green-azure-master/ && ./deploy.sh -g`
+    - blue: `cd ~/clouddrive/ && wget -qO- https://github.com/barracudanetworks/cloud-reference-architectures/archive/master.zip | jar x && cd ~/clouddrive/cloud-reference-architectures-master/Quickstart-Azure-Blue-Green/ && ./deploy.sh -b`
+    - green: `cd ~/clouddrive/ && wget -qO- https://github.com/barracudanetworks/cloud-reference-architectures.git | jar x && cd ~/clouddrive/cloud-reference-architectures-master/Quickstart-Azure-Blue-Green/ && ./deploy.sh -g`
 
 - Answer the questions asked by the script on the following variables: location, prefix and password.
 
