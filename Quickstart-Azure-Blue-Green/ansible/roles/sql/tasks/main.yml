@@ -1,0 +1,71 @@
+---
+- file:
+    path: /data/db
+    state: directory
+    mode: 0755
+
+- name: Install required libraries
+  apt:
+    name: "{{ item.name }}"
+    state: latest
+    install_recommends: no
+  with_items:
+    - { name: 'python3-mysqldb' }
+    - { name: 'mariadb-client-core-10.0' }
+
+- name: Install MariaDB docker container
+  docker_container:
+    name: db
+    image: mariadb
+    state: started
+    recreate: yes
+    pull: true
+    ports:
+      - "3306:3306"
+    env:
+      MYSQL_ROOT_PASSWORD: "{{ DB_PASSWORD }}"
+    volumes:
+     - /data/db:/var/lib/mysql
+
+- name: Wait 300 seconds for port 3306 to become open on the host, don't start checking for 10 seconds
+  wait_for:
+    host: "{{ hostvars[inventory_hostname].internal_host }}"
+    port: 3306
+    delay: 10
+    timeout: 600
+  become: no
+
+# Create database demo
+- name: Create a new database with name 'demo'
+  mysql_db:
+    name: demo
+    state: present
+    login_host: "{{ hostvars[inventory_hostname].internal_host }}"
+    login_user: root
+    login_password: "{{ DB_PASSWORD }}"
+
+# Create database user with name 'bob' and password 'demo' with all database privileges
+- mysql_user:
+    name: demo
+    host: '%'
+    password: demo
+    priv: 'demo.*:ALL'
+    state: present
+    login_host: "{{ hostvars[inventory_hostname].internal_host }}"
+    login_user: root
+    login_password: "{{ DB_PASSWORD }}"
+
+# Copy database dump file to remote host and restore it to database 'my_db'
+- name: Copy database dump file
+  copy:
+    src: colors/data/colors.sql
+    dest: /tmp
+
+- name: Restore database
+  mysql_db:
+    name: demo
+    state: import
+    target: /tmp/colors.sql
+    login_host: "{{ hostvars[inventory_hostname].internal_host }}"
+    login_user: root
+    login_password: "{{ DB_PASSWORD }}"

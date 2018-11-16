@@ -1,0 +1,42 @@
+---
+- name: Install docker apt key
+  apt_key:
+    id: "58118E89F3A912897C070ADBF76221572C52609D"
+    keyserver: "hkp://p80.pool.sks-keyservers.net:80"
+    state: present
+#  command: sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+
+- name: Install docker repo and apt-get update
+  apt_repository:
+    repo: "deb https://apt.dockerproject.org/repo ubuntu-xenial main"
+    update_cache: yes
+
+- name: Install latest version of "docker" ignoring "install-recommends"
+  apt:
+    name: "{{ item.name }}"
+    state: latest
+    install_recommends: no
+  with_items:
+    - { name: 'docker-engine' }
+    - { name: 'python3-setuptools' }
+    - { name: 'python3-pkg-resources' }
+    - { name: 'python3-pip' }
+    - { name: 'rsync' }
+
+- name: Upgrade pip
+  pip:
+    name: pip
+    extra_args: --upgrade
+
+- name: Install docker-compose and docker-py
+  pip:
+    name: "{{ item.name }}"
+  with_items:
+    - { name: 'docker' }
+    - { name: 'docker-compose' }
+
+- name: Add user ansible_user to docker group
+  user:
+    name: '{{ ansible_user }}'
+    groups: docker
+    append: yes

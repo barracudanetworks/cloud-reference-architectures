@@ -1,0 +1,43 @@
+#### WAF Create or update entry ###
+- name: Get "{{ request_name }}"
+  uri:
+    url: "{{ request_url }}/{{ request_name }}"
+    method: GET
+    user: "{{ token.json.token }}"
+    password: ""
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
+  register: service
+  ignore_errors: True
+#- debug:
+#    msg: "{{service.json}}"
+
+- name: Create "{{ request_name }}"
+  when: service|failed
+  uri:
+    url: "{{ request_url }}"
+    method: POST
+    user: "{{ token.json.token }}"
+    password: ""
+    force_basic_auth: yes
+    body: "{{ request_body }}"
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+    status_code: 201
+
+- name: Edit "{{ request_name }}"
+  when: service|succeeded
+  uri:
+    url: "{{ request_url }}/{{ request_name }}"
+    method: PUT
+    user: "{{ token.json.token }}"
+    password: ""
+    force_basic_auth: yes
+    body: "{{ request_body }}"
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
