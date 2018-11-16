@@ -6,8 +6,8 @@ This code repository will contain different reference architectures across the d
 
 ## Available architectures
 
-- [High Availability Cluster in Azure using an Availability Set and an Internal Standard Load Balancer](Quickstart-CGF-HA/)
-- [Blue / Green Deployment in Azure with Barracuda CloudGen Firewall and WAF](Quickstart-Azure-CGF-HA/)
+- [High Availability Cluster in Azure using an Availability Set and an Internal Standard Load Balancer](tree/master/Quickstart-Azure-Blue-Green/)
+- [Blue / Green Deployment in Azure with Barracuda CloudGen Firewall and WAF](tree/master/Quickstart-Azure-CGF-HA/)
 
 
 
