@@ -1,0 +1,29 @@
+# Compiled files
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+
+# TF plan files
+*.tfplan
+
+# ANSIBLE retry files
+*.retry
+
+# Directories
+.terraform/
+.vagrant/
+
+# SSH Keys
+*.pem
+
+# Backup files
+*.bak
+
+# inventory files
+*/inventory/*
+
+# output file with deployment info
+*.out
+
+#MacOSX files
+.DS_Store

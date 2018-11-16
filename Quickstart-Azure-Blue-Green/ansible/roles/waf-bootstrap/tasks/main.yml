@@ -1,0 +1,52 @@
+---
+# Boostrapping Barracuda Web Application Firewall in Azure
+# Steps
+#  - Wait for poort 8000
+#  - Wait for license page
+#  - Enter license token
+#  - Wait for 'Barracuda Product Terms'
+#  - Agree EULA and register
+
+#- name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
+#  wait_for:
+#    host: "{{ hostvars[inventory_hostname].ansible_host }}"
+#    port: {{ hostvars[inventory_hostname].ansible_port }}
+#    delay: 10
+#    timeout: 600
+#  become: no
+#  delegate_to: localhost
+#
+- name: WAF - Check if we have a login page and the WAF is already provisioned
+  uri: 
+    url: http://{{ hostvars[inventory_hostname].ansible_host }}:{{ hostvars[inventory_hostname].ansible_port }}/
+    return_content: true
+    timeout: 60
+  register: provisioned
+  retries: 2
+  delay: 5
+
+- name: WAF - Is already provisioned, ending this playbook
+  meta: end_play
+  when: "'/cgi-mod/index.cgi' in provisioned.content"
+
+- name: Check if page contains 'Barracuda Product Terms' string
+  uri: 
+    url: http://{{ hostvars[inventory_hostname].ansible_host }}:{{ hostvars[inventory_hostname].ansible_port }}/
+    return_content: true
+    timeout: 300
+  register: response
+  until: "'Barracuda Product Terms' in response.content"
+  retries: 60
+  delay: 15
+
+- set_fact: 
+    eula_hash_val: "{{ response.content | regex_findall('eula_hash_val\" value=\"(.+)\"') }}"
+
+- name: Accept Barracuda Product Terms
+  uri:
+    url: http://{{ hostvars[inventory_hostname].ansible_host }}:{{ hostvars[inventory_hostname].ansible_port }}/
+    method: POST
+    body: "name=Joeri+Van+Hoof&email=jvanhoof%40barracuda.com&company=Barracuda+Networks&action=save_signed_eula&eula_hash_val={{ eula_hash_val }}"
+    status_code: 200 
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"

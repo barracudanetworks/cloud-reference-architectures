@@ -1,0 +1,6 @@
+---
+# Variables for connection to deployed webservers
+ansible_connection: ssh 
+ansible_user: azureuser
+ansible_ssh_private_key_file: "{{ lookup('env', 'DOWNLOADSECUREFILE1_SECUREFILEPATH') | realpath }}"
+ansible_ssh_extra_args: -o StrictHostKeyChecking=no

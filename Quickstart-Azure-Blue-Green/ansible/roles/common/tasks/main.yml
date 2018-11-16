@@ -1,0 +1,43 @@
+---
+- name: Wait 900 seconds for port 22 to become open on the host
+  wait_for:
+    host: "{{ hostvars[inventory_hostname].ansible_host }}"
+    search_regex: OpenSSH
+    port: "{{ hostvars[inventory_hostname].ansible_port }}"
+    timeout: 900
+  become: no
+  delegate_to: localhost
+
+- name: Update package cache & dist-upgrade
+  apt: 
+    upgrade: dist
+    update_cache: yes
+  async: 600
+  poll: 10
+
+- name: Check if a reboot is required
+  register: file
+  stat: path=/var/run/reboot-required get_md5=no
+
+#
+# Reboot & wait derived from code written by Martin Eggen.
+# https://github.com/ansible/ansible/issues/14413#issuecomment-257887580
+# 
+- name: Restart server
+  shell: sleep 2 && /sbin/shutdown -r now "Ansible system package upgraded"
+#  args: 
+#    removes=/var/run/reboot-required
+  async: 1
+  poll: 0
+  ignore_errors: true
+  when: file.stat.exists == true
+
+- name: Wait 600 seconds for port 22 to become open on the host, don't start checking for 5 seconds
+  wait_for:
+    host: "{{ hostvars[inventory_hostname].ansible_host }}"
+    search_regex: OpenSSH
+    delay: 5
+    port: "{{ hostvars[inventory_hostname].ansible_port }}"
+    timeout: 600
+  become: no
+  delegate_to: localhost

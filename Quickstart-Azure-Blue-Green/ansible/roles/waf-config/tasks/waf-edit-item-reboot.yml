@@ -1,0 +1,46 @@
+#### WAF edit item ###
+- set_fact:
+    waf_reboot: false 
+
+- name: "Edit item {{ request_comment }}"
+  uri:
+    url: "{{ request_url }}{{ request_path }}"
+    method: PUT
+    user: "{{ waf_token.json.token }}"
+    password: ""
+    force_basic_auth: yes
+    body: "{{ request_body }}"
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+    status_code: 200,302
+  register: result
+
+- name: WAF - Verify if a reboot is performed
+  when: ( result.status == 302 and result.location | select("match", ".*result\.html.*") )
+  set_fact:
+    waf_reboot: true 
+
+- name: WAF - Waiting for system to return after reboot
+  when: ( waf_reboot == true )
+  wait_for_connection:
+    port: 8000
+    delay: 20
+
+- name: WAF - Checking if Barracuda WAF Login page is ready
+  when: ( waf_reboot == true )
+  uri: 
+    url: "{{ request_url }}/cgi-mod/index.cgi"
+    return_content: true
+    timeout: 300
+  register: response
+  until: "'Please enter your administrator login and password' in response.content"
+  retries: 60
+  delay: 15
+
+- include_tasks: waf-get-token.yml
+  when: ( waf_reboot == true )
+
+- set_fact:
+    waf_reboot: false 

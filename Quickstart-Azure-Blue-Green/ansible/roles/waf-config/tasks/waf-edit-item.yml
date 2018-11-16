@@ -1,0 +1,13 @@
+#### WAF edit item ###
+- name: "WAF - Edit item {{ request_comment }}"
+  uri:
+    url: "{{ request_url }}{{ request_path }}"
+    method: PUT
+    user: "{{ waf_token.json.token }}"
+    password: ""
+    force_basic_auth: yes
+    body: "{{ request_body }}"
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+    status_code: 200

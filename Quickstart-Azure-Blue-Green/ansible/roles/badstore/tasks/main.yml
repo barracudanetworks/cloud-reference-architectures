@@ -1,0 +1,17 @@
+---
+- name: Installing Badstore docker container
+  docker_container:
+    name: badstore
+    image: jvhoof/badstore-docker
+    state: started
+    pull: true
+    ports:
+    - "9200:80"
+
+#- name: Wait 300 seconds for port 9000 to become open on the host, don't start checking for 5 seconds
+#  wait_for:
+#    host: "{{ hostvars[inventory_hostname].ansible_host }}"
+#    port: 9200
+#    timeout: 300
+#  become: no
+#  delegate_to: localhost

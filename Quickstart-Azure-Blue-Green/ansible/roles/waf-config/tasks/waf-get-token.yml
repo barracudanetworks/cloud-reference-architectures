@@ -1,0 +1,10 @@
+#### WAF edit entry ###
+- name: WAF - Get login token
+  uri:
+    url: "{{ request_url }}/restapi/v3/login"
+    method: POST
+    body: '{"username":"{{ waf_username }}", "password":"{{ WAF_PASSWORD }}"}'
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+  register: waf_token

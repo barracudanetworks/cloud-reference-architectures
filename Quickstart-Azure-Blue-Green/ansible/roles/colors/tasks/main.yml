@@ -1,0 +1,91 @@
+---
+- name: Create data directory
+  file: dest=/data/colors state=directory owner=www-data group=www-data mode=0755
+
+- name: Sync colors files to the remote server
+  synchronize:
+    src: colors/
+    dest: /data/colors/
+    delete: yes
+    recursive: yes
+
+- name: Color-blue
+  docker_container:
+    name: colorblue
+    image: nimmis/apache-php7
+    state: started
+    pull: true
+    ports:
+      - "9300:80"
+    volumes:
+      - /data/colors/html/blue:/var/www/html:ro
+
+#- name: Wait 300 seconds for port 9300 to become open on the host
+#  wait_for:
+#    host: "{{ hostvars[inventory_hostname].ansible_host }}"
+#    port: 9300
+#    timeout: 300
+#  become: no
+#  delegate_to: localhost
+
+- name: Color-green
+  docker_container:
+    name: colorgreen
+    image: nimmis/apache-php7
+    state: started
+    pull: true
+    ports:
+      - "9400:80"
+    volumes:
+      - /data/colors/html/green:/var/www/html:ro
+
+#- name: Wait 300 seconds for port 9400 to become open on the host
+#  wait_for:
+#    host: "{{ hostvars[inventory_hostname].ansible_host }}"
+#    port: 9400
+#    timeout: 300
+#  become: no
+#  delegate_to: localhost
+
+- name: Color-pink
+  docker_container:
+    name: colorpink
+    image: nimmis/apache-php7
+    state: started
+    pull: true
+    ports:
+      - "9500:80"
+    volumes:
+      - /data/colors/html/pink:/var/www/html:ro
+
+#- name: Wait 300 seconds for port 9500 to become open on the host
+#  wait_for:
+#    host: "{{ hostvars[inventory_hostname].ansible_host }}"
+#    port: 9500
+#    timeout: 300
+#  become: no
+#  delegate_to: localhost
+
+# Create database configuration file for blue
+- name: Create database configuration for blue
+  template:
+    src: config.j2
+    dest: /data/colors/html/blue/config.inc.php
+
+# Create database configuration file for green
+- name: Create database configuration for green
+  template:
+    src: config.j2
+    dest: /data/colors/html/green/config.inc.php
+
+# Create database configuration file for pink
+- name: Create database configuration for pink
+  template:
+    src: config.j2
+    dest: /data/colors/html/pink/config.inc.php
+
+# Create database configuration file for red
+- name: Create database configuration for red
+  template:
+    src: config.j2
+    dest: /data/colors/html/pink/config.inc.php

@@ -1,0 +1,13 @@
+#### WAF set item ###
+- name: Create "{{ request_name }}"
+  uri:
+    url: "{{ request_url }}{{ request_path }}"
+    method: POST
+    user: "{{ waf_token.json.token }}"
+    password: ""
+    force_basic_auth: yes
+    body: "{{ request_body }}"
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+    status_code: 201

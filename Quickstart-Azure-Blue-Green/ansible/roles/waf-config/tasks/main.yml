@@ -1,0 +1,196 @@
+---
+# Boostrapping Barracuda Web Application Firewall in Azure
+# Steps
+#  - Wait for login page
+#  - Get login token
+#  - Configure system settings (Beware: changing the timezone will issue a reboot of the unit)
+#  - Add SSL Certificate for services
+#  - Configure service and content rules
+
+### WAF Getting ready ###
+- name: WAF - Check if login page is ready
+  uri: 
+    url: http://{{ hostvars[inventory_hostname].ansible_host }}:{{ hostvars[inventory_hostname].ansible_port }}/cgi-mod/index.cgi
+    return_content: true
+    timeout: 300
+  register: response
+#  until: "'Please enter your administrator login and password' in response.content"
+  until: "'cui-field-password' in response.content"
+  retries: 60
+  delay: 15
+
+- debug:
+    msg: "List of WAFs {{ ansible_play_hosts }}"
+
+- debug:
+    msg: "Current WAF {{ inventory_hostname }}"
+
+### WAF Auth Token ###
+- include_tasks: waf-get-token.yml
+  vars:
+    request_url: "{{ waf_base_url }}"
+
+### WAF Configure system settings ###
+- include_tasks: waf-edit-item-reboot.yml
+  vars:
+    request_comment: "Configure system settings"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/system"
+    request_body: '{ "device-name": "{{ waf_device_name }}", "hostname": "{{ inventory_hostname }}", "domain": "{{ waf_domain }}", "time-zone": "{{ waf_timezone }}" }'
+
+### WAF Configure cluster information ###
+- include_tasks: waf-edit-item-reboot.yml
+  vars:
+    request_comment: "Configure cluster information"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/cluster"
+    request_body: '{ "cluster-name": "{{ inventory_hostname }}", "cluster-shared-secret": "{{ WAF_PASSWORD }}", "failback-mode": "Automatic", "heartbeat-count-per-interface": "2"}'
+    body_format: json
+
+### WAF Join cluster ###
+- include_tasks: waf-set-item.yml
+  vars:
+    request_comment: "Join cluster"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/cluster/nodes"
+    request_body: '{ "ip-address": "{{ hostvars[ansible_play_hosts[0]].ansible_host }}" }'
+    body_format: json
+  when: inventory_hostname.find("VM-WAF-0") == -1
+#  when: inventory_hostname != ansible_play_hosts[0]
+
+### WAF SSL Certificate
+- include_tasks: waf-create-item.yml
+  vars:
+    request_comment: "Create self signed certificate"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/certificates"
+    request_name: "{{ waf_certificate_name }}"
+    request_body: '{"allow_private_key_export": "Yes", "city": "Campbell", "common_name": "quickstart.cudalab.eu", "country_code": "US", "curve_type": "secp256r1", "key_size": "1024", "key_type": "rsa", "name": "QuickstartCert", "organization_name": "Barracuda Quickstart Demo", "san_certificate": [ "DNS:quickstart.cudalab.eu" ], "state": "CA" }'
+  when: inventory_hostname.find("VM-WAF-0") != -1
+
+#- name: "WAF - Upload certificate"
+#  when: ( sslcert is failed ) and ( inventory_hostname.find("VM-WAF-0") != -1 )
+#  shell: 'curl  -X "POST" "{{ waf_base_url }}/restapi/v3/certificates?upload=signed" \
+#                -H "accept: application/json" -u "{{ waf_token.json.token }}:" \
+#                -H "Content-Type: multipart/form-data" \
+#                -F "name={{ waf_certificate_name }}" \
+#                -F "type=pkcs12" \
+#                -F "key_type=rsa" \
+#                -F "signed_certificate=@{{ waf_certificate_location }};type=application/x-pkcs12" \
+#                -F "assign_associated_key=no" \
+#                -F "allow_private_key_export=Yes" \
+#                -F "password={{ waf_certificate_password }}"'
+#  register: curl
+#- debug:
+#    msg: "{{curl}}"
+
+- name: WAF - Checking if Barracuda WAF Login page is ready
+  when: ( waf_reboot == true )
+  uri: 
+    url: "{{ request_url }}/cgi-mod/index.cgi"
+    return_content: true
+    timeout: 300
+  register: response
+#  until: "Please enter your administrator login and password" in response.content'
+  until: "'cui-field-password' in response.content"
+  retries: 60
+  delay: 15
+
+### WAF Create InstantSSL service
+- include_tasks: waf-create-edit-item.yml
+  vars:
+    request_comment: "Create InstantSSL service"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/services"
+    request_name: "{{ waf_service_http_name }}"
+    request_body: '{"name":"{{ waf_service_http_name }}", "ip-address":"{{ waf_service_http_ip_address }}", "port":"{{ waf_service_http_port }}", "type":"Redirect Service", "address-version":"ipv4", "vsite":"default", "group":"default"}'
+  when: inventory_hostname.find("VM-WAF-0") != -1
+#  when: inventory_hostname == ansible_play_hosts[0]
+
+### WAF Create HTTPS service
+- include_tasks: waf-create-edit-item.yml
+  vars:
+    request_comment: "Create HTTPS service"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/services"
+    request_name: "{{ waf_service_name }}"
+    request_body: '{"name":"{{ waf_service_name }}", "ip-address":"{{ waf_service_ip_address }}", "port":"{{ waf_service_port }}", "type":"HTTP", "address-version":"ipv4", "vsite":"default", "group":"default"}'
+  when: inventory_hostname.find("VM-WAF-0") != -1
+#  when: inventory_hostname == ansible_play_hosts[0]
+
+### WAF Configure SSL encryption HTTPS Service
+- include_tasks: waf-edit-item-reboot.yml
+  vars:
+    request_comment: "Configure SSL encryption HTTPS Service"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/services/{{ waf_service_name }}/ssl-security"
+    request_body: '{ "enable-sni": "No", "status": "On", "certificate": "{{ waf_certificate_name }}", "enable-ssl-3": "No", "enable-tls-1-1": "No", "enable-hsts": "No", "enable-tls-1-2": "Yes", "include-hsts-sub-domains": "Yes", "enable-pfs": "Yes", "enable-tls-1": "No" }'
+    body_format: json
+  when: inventory_hostname.find("VM-WAF-0") != -1
+#  when: inventory_hostname == ansible_play_hosts[0]
+
+#### WAF Create COLORS content rule ###
+- include_tasks: waf-create-edit-item.yml
+  vars:
+    request_comment: "Create COLORS content rule"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/services/{{ waf_service_name }}/content-rules"
+    request_name: "{{ waf_content_rule_colors_name }}"
+    request_body: '{ "access-log": "Enable", "url-match": "/*", "status": "On", "mode": "Active", "name": "{{ waf_content_rule_colors_name }}", "comments": "{{ waf_content_rule_colors_comment }}", "web-firewall-policy": "default", "app-id": "{{ waf_service_name }}", "host-match": "*" }'
+  when: inventory_hostname.find("VM-WAF-0") != -1
+#  when: inventory_hostname == ansible_play_hosts[0]
+
+#### WAF Create COLORS content rule server 1 ###
+- include_tasks: waf-create-edit-item.yml
+  vars:
+    request_comment: "Create COLORS content rule server 1"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/services/{{ waf_service_name }}/content-rules/{{ waf_content_rule_colors_name }}/content-rule-servers"
+    request_name: "{{ waf_content_rule_colors_server_name_1 }}"
+    request_body: '{ "backup-server": "No", "status": "In Service", "name": "{{ waf_content_rule_colors_server_name_1 }}", "port": {{ waf_content_rule_colors_port_1 }}, "identifier": "IP Address", "weight": 1, "ip-address": "{{ waf_content_rule_colors_ip_address_1 }}" }'
+  when: inventory_hostname.find("VM-WAF-0") != -1
+#  when: inventory_hostname == ansible_play_hosts[0]
+
+#### WAF Create COLORS content rule server 2 ###
+- include_tasks: waf-create-edit-item.yml
+  vars:
+    request_comment: "Create COLORS content rule server 2"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/services/{{ waf_service_name }}/content-rules/{{ waf_content_rule_colors_name }}/content-rule-servers"
+    request_name: "{{ waf_content_rule_colors_server_name_2 }}"
+    request_body: '{ "backup-server": "No", "status": "In Service", "name": "{{ waf_content_rule_colors_server_name_2 }}", "port": {{ waf_content_rule_colors_port_2 }}, "identifier": "IP Address", "weight": 1, "ip-address": "{{ waf_content_rule_colors_ip_address_2 }}" }'
+  when: inventory_hostname.find("VM-WAF-0") != -1
+#  when: inventory_hostname == ansible_play_hosts[0]
+
+#### WAF Create COLORS content rule server 3 ###
+- include_tasks: waf-create-edit-item.yml
+  vars:
+    request_comment: "Create COLORS content rule server 3"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/services/{{ waf_service_name }}/content-rules/{{ waf_content_rule_colors_name }}/content-rule-servers"
+    request_name: "{{ waf_content_rule_colors_server_name_3 }}"
+    request_body: '{ "backup-server": "No", "status": "In Service", "name": "{{ waf_content_rule_colors_server_name_3 }}", "port": {{ waf_content_rule_colors_port_3 }}, "identifier": "IP Address", "weight": 1, "ip-address": "{{ waf_content_rule_colors_ip_address_3 }}" }'
+  when: inventory_hostname.find("VM-WAF-0") != -1
+#  when: inventory_hostname == ansible_play_hosts[0]
+
+#### WAF Create TRAFFIC MANAGER content rule ###
+- include_tasks: waf-create-edit-item.yml
+  vars:
+    request_comment: "Create Traffic Manager content rule"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/services/{{ waf_service_name }}/content-rules"
+    request_name: "{{ waf_content_rule_tm_name }}"
+    request_body: '{ "access-log": "Enable", "url-match": "/*", "status": "On", "mode": "Active", "name": "{{ waf_content_rule_tm_name }}", "comments": "{{ waf_content_rule_tm_comment }}", "web-firewall-policy": "default", "app-id": "{{ waf_service_name }}", "host-match": "{{ waf_content_rule_tm_hostname }}" }'
+  when: inventory_hostname.find("VM-WAF-0") != -1  
+#  when: inventory_hostname == ansible_play_hosts[0]
+
+#### WAF Create TRAFFIC MANAGER content rule server ###
+- include_tasks: waf-create-edit-item.yml
+  vars:
+    request_comment: "Create Traffic Manager content rule server"
+    request_url: "{{ waf_base_url }}"
+    request_path: "/restapi/v3/services/{{ waf_service_name }}/content-rules/{{ waf_content_rule_tm_name }}/content-rule-servers"
+    request_name: "{{ waf_content_rule_tm_server_name }}"
+    request_body: '{ "backup-server": "No", "status": "In Service", "name": "{{ waf_content_rule_tm_server_name }}", "port": {{ waf_content_rule_tm_port }}, "identifier": "IP Address", "weight": 1, "ip-address": "{{ waf_content_rule_tm_ip_address }}" }'
+  when: inventory_hostname.find("VM-WAF-0") != -1
+#  when: inventory_hostname == ansible_play_hosts[0]
