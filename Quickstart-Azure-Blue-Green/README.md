@@ -3,6 +3,7 @@
 ## Introduction
 
 ### Purpose of this Architecture
+
 Organizations rely on the "blue-green" architecture when they want an infrastructure that will allow them to test and deploy new applications, builds, updates, etc., with zero downtime, by leveraging identical application stacks.  
 
 This reference architecture, known as blue-green, utilizes two identical application stacks - one is always live, and one is always standby.  Because this is deployed in Azure, it is essentially infrastructure-as-code.
@@ -12,23 +13,23 @@ When a new build is deployed (new application, new updates, etc.); it is deploye
 ### Benefits
 
 - Zero downtime for deployed pipeline
-- Deployment-via-code reduces the opportunities for huyman error to occur
-- Blue/Green allows you to test yournew deployment before it is made life
+- Deployment-via-code reduces the opportunities for human error to occur
+- Blue/Green allows you to test your new deployment before it is made life
 - No downtime when switching to a new version
 - You can always revert to the previous version in case of issues with the new version
 
 ### Operation
 
-This architecture leverages Azure as well as the Barracuda CloudGen Firewall and CloudGen WAF. The Barracuda CloudGen Fiorewall will provide you a single console through which to view and manage traffic passint through the environment, improving troubleshooting and visibility.  The CloudGen WAF will ensure all inbound web traffic and the responses are inspected for data leakage, viruses, OWASP-Top-10 attacks, web scraping and other threats, to both the application and to your users.
+This architecture leverages Azure as well as the Barracuda CloudGen Firewall and CloudGen WAF. The Barracuda CloudGen Firewall will provide you a single console through which to view and manage traffic passing through the environment, improving troubleshooting and visibility.  The CloudGen WAF will ensure all inbound web traffic and the responses are inspected for data leakage, viruses, OWASP-Top-10 attacks, web scraping and other threats, to both the application and to your users.
 
-In the below diagram, a blue/green stack ahs been implemented containing database servers, web servbers as well as the security components of CloudGen WAF and CloudGen Firewall to provide security on the access into the Web Application and the environment.
+In the below diagram, a blue/green stack ahs been implemented containing database servers, web servers as well as the security components of CloudGen WAF and CloudGen Firewall to provide security on the access into the Web Application and the environment.
 
-In a Blue/Green design two environments are used to manage the implementation of new software releases or components while maintaining high availability of the services in that environment.  You can esily move users from one environment to another as necessary to complete the release with minimal interruption (i.e., zero downtime).  This architecture can also be leveraged in the scenario where you want to rehydrate your environment to ensure it is clean.
+In a Blue/Green design two environments are used to manage the implementation of new software releases or components while maintaining high availability of the services in that environment.  You can easily move users from one environment to another as necessary to complete the release with minimal interruption (i.e., zero downtime).  This architecture can also be leveraged in the scenario where you want to rehydrate your environment to ensure it is clean.
 
 ![CGF Azure Network Architecture](images/cudalab-blue-green.png)
 
 ## Prerequisites
-The tools used in this setup are HashiCorp Terraform (> 0.11.x) and RedHat Ansible (> 2.x). Both tools have their pro's and con's. Working together they help maintaining the state of your infrastructure and the ensures the configuration is correct. The deployment can be done from either a bash shell script or from any CI tool. In our case we used Visual Studio Team Services (VSTS). The LINUX VSTS agent requires the Ansible and Terraform tools to be installed as well as the VSTS agent.
+The tools used in this setup are HashiCorp Terraform (> 0.11.x) and RedHat Ansible (> 2.x). Both tools have their pro's and con's. Working together they help maintaining the state of your infrastructure and the ensures the configuration is correct. The deployment can be done from either a bash shell script or from any CI tool. In our case we used Azure DevOps.
 
 ## Deployed resources
 Following resources will be created by this deployment per color:
@@ -64,7 +65,7 @@ To deploy via Azure Cloud Shell you can connect via the Azure Portal or directly
 ![Azure Cloud Shell Bash Edition](images/azurecloudshell1.png)
 
 ### deploy.sh and destroy.sh Parameters
-The script requires certain environment variables as well as some arguments. 
+The script requires as some arguments. 
 
 | Argument | Deploy | Destroy | Parameter Name | Description
 |---|---|---|---|---

@@ -42,6 +42,9 @@ To deploy via Azure Portal you can use the button below to deploy this reference
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+ Click here to view how to deploy to Azure. And click here to view the visualization chart.
+
+
 ### Azure CLI
 
 To deploy via Azure Cloud Shell you can connect via the Azure Portal or directly to [https://shell.azure.com/](https://shell.azure.com/). 
