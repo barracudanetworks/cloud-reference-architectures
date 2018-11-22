@@ -90,7 +90,3 @@ TF_VAR_LOCATION | Azure datacenter location to deploy the environment
 TF_VAR_PREFIX | Prefix text for all deployed resources
 TF_VAR_TMDNSNAME | Azure Traffic Manager DNS name
 DOWNLOADSECUREFILE1_SECUREFILEPATH | The location of the SSH private key used to connect to the backend servers
-
-
-
-
