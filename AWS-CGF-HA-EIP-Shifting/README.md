@@ -23,11 +23,11 @@ EIP shifting works by reassigning the master EIP from the primary to the seconda
 
 The following diagrams illustrate the HA pair in each state. During normal operation, the primary firewall is active while the secondary firewall is in stand-by mode:
 
-<image-primary active>
+![CGF AWS Primary Active](images/CGF-MultiAZ-Primary-Active-EIP-Shifting.png)
 
 When an HA failover event takes place, the secondary firewall comes into production. The elastic IP is associated with the secondary firewall to handle inbound traffic. For outbound traffic, the route table is modified so that the default route now uses the secondary firewall’s network interface:
 
-<image-secondary-active>
+![CGF AWS Secondary Active](images/CGF-MultiAZ-Secondary-Active-EIP-Shifting.png)
 
 The HA pair will remain in this state until the firewall administrator manually intervenes and puts the primary firewall back into production.
 
