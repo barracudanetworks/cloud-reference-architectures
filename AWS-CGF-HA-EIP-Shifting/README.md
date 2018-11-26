@@ -36,7 +36,6 @@ Use Cases for a CloudGen Firewall High Availability Cluster
 - Edge Firewall – Scan for malicious traffic using the built-in IPS and handle access to resources via access rules.
 - Secure Remote Access – Client-to-site VPN, CudaLaunch, and SSL VPN using TINA, SSL VPN, and IPsec VPN protocols.
 
-
 ## Prerequisites
 
 The resources are deployed by means of a CloudFormation Template (CFT). This can be done from the AWS console or from a machine with AWS CLI installed. In either case, the user credentials will need to have sufficient rights to create all the elements described below under Deployed Resources. Additionally, you will need to create an IAM role for the CGF instances. Details on the IAM role can be found in this [Barracuda Campus article](https://campus.barracuda.com/doc/73719778/). You will also need to download the latest CFT files from the Barracuda [GitHub repository](https://github.com/barracudanetworks/cloud-reference-architectures). 
@@ -50,3 +49,8 @@ The following resources are deployed into the region specified during the stack 
 - Two CGF instances, one in each availability zone
 - One elastic IP address
 
+## Deployment
+Deployment can be done from the AWS console or from a machine with AWS CLI installed. In either case you will need to clone or download the CFT files from the Barracuda [GitHub repository](https://github.com/barracudanetworks/cloud-reference-architectures).
+
+### AWS Console
+Open the AWS console and select the region where the firewalls will be deployed. Navigate to CloudFormation and select Create Stack. Under “Choose Template” select Upload a Template to Amazon S3. In the file select dialog browse to the location where you downloaded the files from the GitHub repository. Choose the file CGF_HA_floatingEIP.json. Click Next to move to “Specify Details.”
