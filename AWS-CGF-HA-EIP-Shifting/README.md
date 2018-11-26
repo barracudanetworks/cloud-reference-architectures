@@ -79,4 +79,45 @@ After specifying the options, click Next to proceed to the Review page. Review y
 ## Next Steps
 
 After the deployment has completed you can log in to the primary firewall using the Barracuda Firewall Admin utility. (Download [here](https://d.barracudanetworks.com/ngfirewall/8.0.0/FirewallAdmin_8.0.0-819.exe).) This is a self-contained Windows binary that does not require installation. Detailed information about the Firewall Admin utility can be found in this Barracuda [Campus article](https://campus.barracuda.com/product/cloudgenfirewall/doc/73719519/barracuda-firewall-admin/).
+
 Launch Firewall Admin and connect to the EIP address that was deployed by the template. Note that both the primary and secondary firewalls will have a public IP address, however only the primary firewall will have the EIP address. Connect to the firewall with username of “root” and the instance ID as the initial password.
+
+![CGF Login](images/CGF-login-1.png)
+
+The first time you log in you will be asked to trust the certificate. Click Trust, and then click Yes to change the root password. You will be prompted to log in again with the new password. Once logged in you will be at the dashboard.
+
+![CGF Login](images/CGF-login-2.png)
+
+For BYOL deployments you will also need to activate the license as described in this Barracuda [Campus article](https://campus.barracuda.com/product/cloudgenfirewall/doc/79463377/how-to-activate-and-license-a-stand-alone-virtual-or-public-cloud-firewall-or-control-center). Note: it is sometimes convenient to deploy a Windows bastion host in one of the public subnets. You can RDP into the bastion host and run the Firewall Admin utility there. This is especially helpful if you are testing HA failover scenarios. See this AWS [Security Blog article](https://aws.amazon.com/blogs/security/controlling-network-access-to-ec2-instances-using-a-bastion-server/) for tips on creating a secured bastion host.
+
+To test the firewall it is necessary to have at least one host in a private subnet. In the AWS console navigate to VPC and select Subnets. Create a new subnet within the newly deployed VPC. After the subnet is created, navigate to Route Tables. You will see several route tables listed. Select the private route table created by the template. Select the Subnet Association tab, click Edit, and then select the private subnet that you just created. You may now deploy hosts in the private subnet and they will be protected by the CGF. When deploying hosts into the private subnet be sure to disable auto-assignment of public IP address.
+
+At this point the firewalls have been deployed and are ready to be configured. 
+
+## Post Deployment Configuration
+
+After logging in you will be at the system dashboard. All firewall configuration tasks are done from the CONFIGURATION tab. Click CONFIGURATION and note the Configuration Tree. Start by navigating to the firewall forwarding rules: Configuration Tree > Virtual Servers > S1 > Assigned Services > NGFW (Firewall) and double-click Forwarding Rules. The default forwarding rules are displayed:
+
+![CGF Login](images/CGF-Default-forwarding-rules.png)
+
+Several rules have automatically been created. For example, rule #7 (CLOUD-NET-2-INTERNET) is a pass rule allowing traffic from VPC hosts to connect to the Internet.
+
+The CGF can also protect inbound connections. As an example we will create a destination NAT rule that allows incoming traffic on port 221 to be directed to a Linux server in a protected subnet. Start by clicking Lock, then click the small green + icon that appears directly below the Send Changes button. A new rule dialog will be displayed. Make the follow edits to the new rule:
+-	Click the drop-down and change Block to Dst-NAT
+-	Change the rule name from NewRule to SSH-221
+-	Under Source, click the drop-down and select Internet
+-	Under Service, click the drop-down and select <explicit-srv>
+- - Double-click in the grid under <explicit-srv> to open the edit/create service object dialog
+- - Click New Object (second dialog opens)
+- - Put “221” in the Port Range field and click OK then click OK again
+-	Under Destination, click the drop-down and select All Firewall IPs
+-	In the Target List field put the IP address of the host in IP:port format
+-	Under Connection Method click the drop-down and select Original Source IP
+-	Click OK to add the rule
+The new rule will look similar to this:
+
+![CGF Login](images/CGF-New-DstNAT-rule.png)
+
+The new rule is inserted into the list at #11 and BLOCKALL becomes rule #12. Click Send Changes, Activate, and Activate to apply the rule. The firewall will now accept SSH connections on port 221 and redirect them to the specified host. In the above example the connections would go to 10.222.11.132. This method can be employed for inbound connections using any TCP protocol, such as RDP, HTTP, and HTTPS.
+
+More information on configuring the CloudGen Firewall can be found at [Barracuda Campus](https://campus.barracuda.com/product/cloudgenfirewall/doc/79462645/overview/). 
