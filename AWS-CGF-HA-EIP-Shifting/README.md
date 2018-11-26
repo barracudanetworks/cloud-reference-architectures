@@ -54,3 +54,29 @@ Deployment can be done from the AWS console or from a machine with AWS CLI insta
 
 ### AWS Console
 Open the AWS console and select the region where the firewalls will be deployed. Navigate to CloudFormation and select Create Stack. Under “Choose Template” select Upload a Template to Amazon S3. In the file select dialog browse to the location where you downloaded the files from the GitHub repository. Choose the file `CGF_HA_floatingEIP.json`. Click Next to move to “Specify Details.”
+
+The following information will need to be supplied:
+-	Stack Name
+-	Instance Type
+-	License Mode – BYOL, PAYG, or metered
+-	Release Version (8.0.0 recommended)
+-	VPC address space (recommend at least a /20 network)
+-	Private IP address for each firewall
+-	AZ for primary firewall
+-	AZ for secondary firewall
+-	Enable RESTAPI by default
+-	IAM profile name (the IAM you created earlier)
+-	Prefix prepended to all resources created by this template
+
+After specifying the details, click Next to proceed to Options. These include:
+-	Tags
+-	Permissions – specify IAM role used by CFT when creating resources
+-	Rollback triggers
+-	Advanced options like notifications and stack policy
+
+After specifying the options, click Next to proceed to the Review page. Review your selections, and then click Create to deploy the stack. Stack creation can take 10 minutes or more to complete.
+
+## Next Steps
+
+After the deployment has completed you can log in to the primary firewall using the Barracuda Firewall Admin utility. (Download [here](https://d.barracudanetworks.com/ngfirewall/8.0.0/FirewallAdmin_8.0.0-819.exe).) This is a self-contained Windows binary that does not require installation. Detailed information about the Firewall Admin utility can be found in this Barracuda [Campus article](https://campus.barracuda.com/product/cloudgenfirewall/doc/73719519/barracuda-firewall-admin/).
+Launch Firewall Admin and connect to the EIP address that was deployed by the template. Note that both the primary and secondary firewalls will have a public IP address, however only the primary firewall will have the EIP address. Connect to the firewall with username of “root” and the instance ID as the initial password.
