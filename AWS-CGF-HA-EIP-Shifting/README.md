@@ -3,6 +3,7 @@
 ## Introduction
 
 To build highly available services in AWS, each layer of your architecture should be redundant over multiple Availability Zones. Each AWS region is made up of at least two isolated Availability Zones. In case one Availability Zone goes down, your application continues to run in the other datacenter without interruption with minimal failover time. 
+
 For the Barracuda CloudGen Firewall (CGF), this means deploying two firewall instances into two public subnets, each in a different Availability Zone. The firewalls are in an active-passive cluster. Both firewalls share a virtual server containing such services as the Forwarding Firewall or VPN service. Should the primary firewall become unavailable, the virtual server is immediately started on the secondary firewall. The now-active secondary firewall connects to the underlying cloud platform and rewrites the routes in the AWS route table to use the now-active firewall as the gateway device for the backend instances. After the route table is rewritten, normal operations are resumed, even if one of the two Availability Zones is experiencing an outage. Failing over the virtual server, although fast, is not transparent to the user. Existing connections will time out, however, site-to-site VPNs generally re-connect within 30-60 seconds.
 
 Elastic IP (EIP) shifting has some advantages over route shifting:
@@ -12,7 +13,7 @@ Elastic IP (EIP) shifting has some advantages over route shifting:
 
 The following diagram illustrates a multi-AZ implementation of the Barracuda CloudGen Firewall in a High Availability pair:
 
-<image>
+![CGF AWS Network Architecture](images/CGF-MultiAZ-With-EIP-Shifting.png)
 
 High Availability Clusters must be sized for the expected peak load. If the expected workload is dynamic in nature and a default gateway is not required, use a CloudGen Firewall Auto Scaling cluster instead.
 
