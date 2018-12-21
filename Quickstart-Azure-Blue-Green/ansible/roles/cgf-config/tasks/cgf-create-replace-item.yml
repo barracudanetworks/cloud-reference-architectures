@@ -1,47 +1,50 @@
-#### WAF Create or edit item ###
-- name: "{{ request_comment }}"
+#### CGF create or replace item ###
+- name: "Get {{ request_name }}"
   uri:
     url: "{{ request_url }}{{ request_path }}/{{ request_name }}"
     method: GET
-    user: "{{ waf_token.json.token }}"
-    password: ""
-    force_basic_auth: yes
+    timeout: 60
     headers:
       Content-Type: "application/json"
+      X-API-Token: "{{ request_token }}"
     status_code: 200, 404
+    validate_certs: False
   register: result
-  ignore_errors: True
   until: result.status != -1
+#- debug:
+#    msg: "{{result}}"
 
 - name: Create "{{ request_name }}"
   when: result.status == 404
   uri:
     url: "{{ request_url }}{{ request_path }}"
     method: POST
-    user: "{{ waf_token.json.token }}"
-    password: ""
-    force_basic_auth: yes
-    body: "{{ request_body }}"
-    body_format: json
     timeout: 60
     headers:
       Content-Type: "application/json"
-    status_code: 201
+      X-API-Token: "{{ request_token }}"
+    body: "{{ request_body }}"
+    body_format: json
+    status_code: 204
+    validate_certs: False
   register: result2
   until: result2.status != -1
+#- debug:
+#    msg: "{{result}}"
 
-- name: Edit "{{ request_name }}"
+- name: "Replace {{ request_name }}"
   when: result.status == 200
   uri:
     url: "{{ request_url }}{{ request_path }}/{{ request_name }}"
     method: PUT
-    user: "{{ waf_token.json.token }}"
-    password: ""
-    force_basic_auth: yes
-    body: "{{ request_body }}"
-    body_format: json
+    timeout: 60
     headers:
       Content-Type: "application/json"
-    status_code: 200
+      X-API-Token: "{{ request_token }}"
+    body: "{{ request_body }}"
+    body_format: json
+    status_code: 204
+    validate_certs: False
   register: result2
   until: result2.status != -1
+

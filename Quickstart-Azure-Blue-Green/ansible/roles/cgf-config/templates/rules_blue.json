@@ -1,0 +1,443 @@
+{
+  "rules": [
+    {
+      "position": {
+        "placement": "top"
+      },
+      "source": {
+          "references": "Azure-Virtual-IP"
+      },
+      "destination": {
+          "references": "All Firewall IPs"
+      },
+      "service": {
+          "explicit": {
+              "entries": [
+                  {
+                      "entry": {
+                          "tcp": {
+                              "clientPortUsed": {
+                                  "from": 1024,
+                                  "to": 65535
+                              },
+                              "ports": [
+                                  "65000"
+                              ]
+                          },
+                          "protocolProtection": {
+                              "protocols": [],
+                              "action": "none",
+                              "policy": "whitelist"
+                          },
+                          "protocol": "TCP",
+                          "sessionTimeout": 86400
+                      }
+                  }
+              ],
+              "name": "<explicit>"
+          }
+      },
+      "policies": {
+          "ips": "Default"
+      },
+      "action": {
+          "target": {
+              "address": "127.0.0.9",
+              "port": 450
+          },
+          "type": "appredirect"
+      },
+      "name": "CLOUD-LB-PROBE",
+      "comment": "Redirect probes from the loadbalancer TCP port 65000 to fwauth on port 450.",
+      "deactivated": false,
+      "dynamic": false,
+      "ipVersion": "IPv4"
+    },
+    {
+      "position": {
+        "placement": "before",
+        "reference": "CLOUD-NET-2-INTERNET"
+      },
+      "source": {
+          "references": "BoxACL"
+      },
+      "destination": {
+          "references": "All Firewall IPs"
+      },
+      "service": {
+          "explicit": {
+              "entries": [
+                  {
+                      "entry": {
+                          "tcp": {
+                              "clientPortUsed": {
+                                  "from": 1024,
+                                  "to": 65535
+                              },
+                              "ports": [
+                                  "8444"
+                              ]
+                          },
+                          "protocolProtection": {
+                              "protocols": [],
+                              "action": "none",
+                              "policy": "whitelist"
+                          },
+                          "protocol": "TCP",
+                          "sessionTimeout": 86400
+                      }
+                  }
+              ],
+              "name": "<explicit>"
+          }
+      },
+      "policies": {
+          "ips": "Default"
+      },
+      "action": {
+          "connection": {
+              "references": "Original Source IP"
+          },
+          "targets": {
+              "explicit": {
+                  "list": [
+                      {
+                          "address": "172.16.100.132",
+                          "port": 22
+                      }
+                  ],
+                  "policy": "fallback"
+              },
+              "criticalPorts": []
+          },
+          "type": "dnat"
+      },
+      "name": "{{ cgf_prefix }}-INBOUND-SSH-WEB",
+      "deactivated": false,
+      "dynamic": false,
+      "ipVersion": "IPv4"
+    },
+    {
+      "position": {
+        "placement": "before",
+        "reference": "CLOUD-NET-2-INTERNET"
+      },
+      "source": {
+          "references": "BoxACL"
+      },
+      "destination": {
+          "references": "All Firewall IPs"
+      },
+      "service": {
+          "explicit": {
+              "entries": [
+                  {
+                      "entry": {
+                          "tcp": {
+                              "clientPortUsed": {
+                                  "from": 1024,
+                                  "to": 65535
+                              },
+                              "ports": [
+                                  "8445"
+                              ]
+                          },
+                          "protocolProtection": {
+                              "protocols": [],
+                              "action": "none",
+                              "policy": "whitelist"
+                          },
+                          "protocol": "TCP",
+                          "sessionTimeout": 86400
+                      }
+                  }
+              ],
+              "name": "<explicit>"
+          }
+      },
+      "policies": {
+          "ips": "Default"
+      },
+      "action": {
+          "connection": {
+              "references": "Original Source IP"
+          },
+          "targets": {
+              "explicit": {
+                  "list": [
+                      {
+                          "address": "172.16.100.196",
+                          "port": 22
+                      }
+                  ],
+                  "policy": "fallback"
+              },
+              "criticalPorts": []
+          },
+          "type": "dnat"
+      },
+      "name": "{{ cgf_prefix }}-INBOUND-SSH-SQL",
+      "deactivated": false,
+      "dynamic": false,
+      "ipVersion": "IPv4"
+    },
+    {
+      "position": {
+        "placement": "before",
+        "reference": "CLOUD-NET-2-INTERNET"
+      },
+      "source": {
+          "references": "{{ cgf_prefix }}-blue-BACKEND"
+      },
+      "destination": {
+          "references": "Internet"
+      },
+      "service": {
+          "references": "Any"
+      },
+      "policies": {
+          "ips": "Default"
+      },
+      "action": {
+          "connection": {
+              "references": "Dynamic NAT"
+          },
+          "type": "pass"
+      },
+      "name": "{{ cgf_prefix }}-OUTBOUND",
+      "bidirectional": false,
+      "deactivated": false,
+      "dynamic": false,
+      "ipVersion": "IPv4"
+    },
+    {
+      "position": {
+        "placement": "before",
+        "reference": "CLOUD-NET-2-INTERNET"
+      },
+      "source": {
+          "references": "{{ cgf_prefix }}-blue-SUBNET-WAF"
+      },
+      "destination": {
+          "references": "{{ cgf_prefix }}-blue-SUBNET-WEB"
+      },
+      "service": {
+          "explicit": {
+              "entries": [
+                  {
+                      "entry": {
+                          "tcp": {
+                              "clientPortUsed": {
+                                  "from": 1024,
+                                  "to": 65535
+                              },
+                              "ports": [
+                                  "9300"
+                              ]
+                          },
+                          "protocolProtection": {
+                              "protocols": [],
+                              "action": "none",
+                              "policy": "whitelist"
+                          },
+                          "protocol": "TCP",
+                          "sessionTimeout": 86400
+                      }
+                  },
+                  {
+                      "entry": {
+                          "tcp": {
+                              "clientPortUsed": {
+                                  "from": 1024,
+                                  "to": 65535
+                              },
+                              "ports": [
+                                  "9400"
+                              ]
+                          },
+                          "protocolProtection": {
+                              "protocols": [],
+                              "action": "none",
+                              "policy": "whitelist"
+                          },
+                          "protocol": "TCP",
+                          "sessionTimeout": 86400
+                      }
+                  },
+                  {
+                      "entry": {
+                          "tcp": {
+                              "clientPortUsed": {
+                                  "from": 1024,
+                                  "to": 65535
+                              },
+                              "ports": [
+                                  "9500"
+                              ]
+                          },
+                          "protocolProtection": {
+                              "protocols": [],
+                              "action": "none",
+                              "policy": "whitelist"
+                          },
+                          "protocol": "TCP",
+                          "sessionTimeout": 86400
+                      }
+                  }
+              ],
+              "name": "<explicit>"
+          }
+      },
+      "policies": {
+          "ips": "Default"
+      },
+      "action": {
+          "connection": {
+              "references": "Original Source IP"
+          },
+          "type": "pass"
+      },
+      "name": "{{ cgf_prefix }}-INTERNAL-WAF-2-WEB",
+      "bidirectional": false,
+      "deactivated": false,
+      "dynamic": false,
+      "ipVersion": "IPv4"
+    },
+    {
+      "position": {
+        "placement": "before",
+        "reference": "CLOUD-NET-2-INTERNET"
+      },
+      "source": {
+          "references": "{{ cgf_prefix }}-blue-SUBNET-WEB"
+      },
+      "destination": {
+          "references": "{{ cgf_prefix }}-blue-SUBNET-DB"
+      },
+      "service": {
+          "explicit": {
+              "entries": [
+                  {
+                      "entry": {
+                          "tcp": {
+                              "clientPortUsed": {
+                                  "from": 1024,
+                                  "to": 65535
+                              },
+                              "ports": [
+                                  "3306"
+                              ]
+                          },
+                          "protocolProtection": {
+                              "protocols": [],
+                              "action": "none",
+                              "policy": "whitelist"
+                          },
+                          "protocol": "TCP",
+                          "sessionTimeout": 86400
+                      }
+                  }
+              ],
+              "name": "<explicit>"
+          }
+      },
+      "policies": {
+          "ips": "Default"
+      },
+      "action": {
+          "connection": {
+              "references": "Original Source IP"
+          },
+          "type": "pass"
+      },
+      "name": "{{ cgf_prefix }}-INTERNAL-WEB-2-SQL",
+      "bidirectional": false,
+      "deactivated": false,
+      "dynamic": false,
+      "ipVersion": "IPv4"
+    },
+    {
+      "position": {
+        "placement": "before",
+        "reference": "CLOUD-NET-2-INTERNET"
+      },
+      "source": {
+          "references": "BoxACL"
+      },
+      "destination": {
+          "references": "All Firewall IPs"
+      },
+      "service": {
+          "explicit": {
+              "entries": [
+                  {
+                      "entry": {
+                          "tcp": {
+                              "clientPortUsed": {
+                                  "from": 1024,
+                                  "to": 65535
+                              },
+                              "ports": [
+                                  "8000"
+                              ]
+                          },
+                          "protocolProtection": {
+                              "protocols": [],
+                              "action": "none",
+                              "policy": "whitelist"
+                          },
+                          "protocol": "TCP",
+                          "sessionTimeout": 86400
+                      }
+                  },
+                  {
+                      "entry": {
+                          "tcp": {
+                              "clientPortUsed": {
+                                  "from": 1024,
+                                  "to": 65535
+                              },
+                              "ports": [
+                                  "8443"
+                              ]
+                          },
+                          "protocolProtection": {
+                              "protocols": [],
+                              "action": "none",
+                              "policy": "whitelist"
+                          },
+                          "protocol": "TCP",
+                          "sessionTimeout": 86400
+                      }
+                  }
+              ],
+              "name": "<explicit>"
+          }
+      },
+      "policies": {
+          "ips": "Default"
+      },
+      "action": {
+          "connection": {
+              "references": "Original Source IP"
+          },
+          "targets": {
+              "explicit": {
+                  "list": [
+                      {
+                          "address": "172.16.100.70"
+                      }
+                  ],
+                  "policy": "fallback"
+              },
+              "criticalPorts": []
+          },
+          "type": "dnat"
+      },
+      "name": "{{ cgf_prefix }}-INBOUND-WAF",
+      "deactivated": true,
+      "dynamic": false,
+      "ipVersion": "IPv4"
+    }
+  ]
+}

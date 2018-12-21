@@ -103,7 +103,7 @@
     request_url: "{{ waf_base_url }}"
     request_path: "/restapi/v3/services"
     request_name: "{{ waf_service_http_name }}"
-    request_body: '{"name":"{{ waf_service_http_name }}", "ip-address":"{{ waf_service_http_ip_address }}", "port":"{{ waf_service_http_port }}", "type":"Redirect Service", "address-version":"ipv4", "vsite":"default", "group":"default"}'
+    request_body: '{"name":"{{ waf_service_http_name }}", "ip-address":"{{ waf_service_http_ip_address }}", "port":"{{ waf_service_http_port }}", "type":"Redirect Service" }'
   when: inventory_hostname.find("VM-WAF-0") != -1
 #  when: inventory_hostname == ansible_play_hosts[0]
 
@@ -114,7 +114,7 @@
     request_url: "{{ waf_base_url }}"
     request_path: "/restapi/v3/services"
     request_name: "{{ waf_service_name }}"
-    request_body: '{"name":"{{ waf_service_name }}", "ip-address":"{{ waf_service_ip_address }}", "port":"{{ waf_service_port }}", "type":"HTTP", "address-version":"ipv4", "vsite":"default", "group":"default"}'
+    request_body: '{"name":"{{ waf_service_name }}", "ip-address":"{{ waf_service_ip_address }}", "port":"{{ waf_service_port }}", "type":"HTTP" }'
   when: inventory_hostname.find("VM-WAF-0") != -1
 #  when: inventory_hostname == ansible_play_hosts[0]
 
@@ -147,7 +147,7 @@
     request_url: "{{ waf_base_url }}"
     request_path: "/restapi/v3/services/{{ waf_service_name }}/content-rules/{{ waf_content_rule_colors_name }}/content-rule-servers"
     request_name: "{{ waf_content_rule_colors_server_name_1 }}"
-    request_body: '{ "backup-server": "No", "status": "In Service", "name": "{{ waf_content_rule_colors_server_name_1 }}", "port": {{ waf_content_rule_colors_port_1 }}, "identifier": "IP Address", "weight": 1, "ip-address": "{{ waf_content_rule_colors_ip_address_1 }}" }'
+    request_body: '{ "status": "In Service", "name": "{{ waf_content_rule_colors_server_name_1 }}", "port": {{ waf_content_rule_colors_port_1 }}, "identifier": "IP Address", "ip-address": "{{ waf_content_rule_colors_ip_address_1 }}" }'
   when: inventory_hostname.find("VM-WAF-0") != -1
 #  when: inventory_hostname == ansible_play_hosts[0]
 
@@ -158,7 +158,7 @@
     request_url: "{{ waf_base_url }}"
     request_path: "/restapi/v3/services/{{ waf_service_name }}/content-rules/{{ waf_content_rule_colors_name }}/content-rule-servers"
     request_name: "{{ waf_content_rule_colors_server_name_2 }}"
-    request_body: '{ "backup-server": "No", "status": "In Service", "name": "{{ waf_content_rule_colors_server_name_2 }}", "port": {{ waf_content_rule_colors_port_2 }}, "identifier": "IP Address", "weight": 1, "ip-address": "{{ waf_content_rule_colors_ip_address_2 }}" }'
+    request_body: '{ "status": "In Service", "name": "{{ waf_content_rule_colors_server_name_2 }}", "port": {{ waf_content_rule_colors_port_2 }}, "identifier": "IP Address", "ip-address": "{{ waf_content_rule_colors_ip_address_2 }}" }'
   when: inventory_hostname.find("VM-WAF-0") != -1
 #  when: inventory_hostname == ansible_play_hosts[0]
 
@@ -169,7 +169,7 @@
     request_url: "{{ waf_base_url }}"
     request_path: "/restapi/v3/services/{{ waf_service_name }}/content-rules/{{ waf_content_rule_colors_name }}/content-rule-servers"
     request_name: "{{ waf_content_rule_colors_server_name_3 }}"
-    request_body: '{ "backup-server": "No", "status": "In Service", "name": "{{ waf_content_rule_colors_server_name_3 }}", "port": {{ waf_content_rule_colors_port_3 }}, "identifier": "IP Address", "weight": 1, "ip-address": "{{ waf_content_rule_colors_ip_address_3 }}" }'
+    request_body: '{ "status": "In Service", "name": "{{ waf_content_rule_colors_server_name_3 }}", "port": {{ waf_content_rule_colors_port_3 }}, "identifier": "IP Address", "ip-address": "{{ waf_content_rule_colors_ip_address_3 }}" }'
   when: inventory_hostname.find("VM-WAF-0") != -1
 #  when: inventory_hostname == ansible_play_hosts[0]
 
@@ -191,6 +191,6 @@
     request_url: "{{ waf_base_url }}"
     request_path: "/restapi/v3/services/{{ waf_service_name }}/content-rules/{{ waf_content_rule_tm_name }}/content-rule-servers"
     request_name: "{{ waf_content_rule_tm_server_name }}"
-    request_body: '{ "backup-server": "No", "status": "In Service", "name": "{{ waf_content_rule_tm_server_name }}", "port": {{ waf_content_rule_tm_port }}, "identifier": "IP Address", "weight": 1, "ip-address": "{{ waf_content_rule_tm_ip_address }}" }'
+    request_body: '{ "status": "In Service", "name": "{{ waf_content_rule_tm_server_name }}", "port": {{ waf_content_rule_tm_port }}, "identifier": "IP Address", "ip-address": "{{ waf_content_rule_tm_ip_address }}" }'
   when: inventory_hostname.find("VM-WAF-0") != -1
 #  when: inventory_hostname == ansible_play_hosts[0]

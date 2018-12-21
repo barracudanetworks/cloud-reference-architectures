@@ -70,11 +70,11 @@ resource "azurerm_virtual_machine" "webvm" {
 
 data "template_file" "web_ansible" {
   count    = 1
-  template = "${file("${path.module}/ansible_host_lnx.tpl")}"
+  template = "${file("${path.module}/ansible_host.tpl")}"
 
   vars {
     name      = "${var.PREFIX}-${var.DEPLOYMENTCOLOR}-VM-WEB"
-    arguments = "ansible_host=${data.azurerm_public_ip.cgfpipa.ip_address} ansible_port=8444 gather_facts=no internal_host=${azurerm_network_interface.sqlifc.private_ip_address}"
+    arguments = "ansible_host=${data.azurerm_public_ip.cgfpipa.ip_address} ansible_port=8444 gather_facts=no internal_host=${azurerm_network_interface.sqlifc.private_ip_address} ansible_python_interpreter=/usr/bin/python3"
   }
 
   depends_on = ["azurerm_virtual_machine.webvm"]

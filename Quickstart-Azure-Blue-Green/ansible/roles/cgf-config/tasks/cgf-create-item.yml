@@ -3,24 +3,25 @@
   uri:
     url: "{{ request_url }}{{ request_path }}/{{ request_name }}"
     method: GET
-    user: "{{ waf_token.json.token }}"
+    user: "{{ cgf_token }}"
     password: ""
     force_basic_auth: yes
     headers:
       Content-Type: "application/json"
     status_code: 200
+  register: service
   ignore_errors: True
-  register: result
-  until: result.status != -1
+  until: service.status != -1
+
 #- debug:
 #    msg: "{{service.json}}"
 
 - name: Create "{{ request_name }}"
-  when: result is failed
+  when: service is failed
   uri:
     url: "{{ request_url }}{{ request_path }}"
     method: POST
-    user: "{{ waf_token.json.token }}"
+    user: "{{ cgf_token }}"
     password: ""
     force_basic_auth: yes
     body: "{{ request_body }}"
@@ -29,5 +30,5 @@
     headers:
       Content-Type: "application/json"
     status_code: 201
-  register: result2
-  until: result2.status != -1
+  register: result
+  until: result.status != -1

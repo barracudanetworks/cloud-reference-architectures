@@ -16,6 +16,7 @@
       Accept: "application/json"
     status_code: 200,302
   register: result
+  until: result.status != -1
 
 - name: WAF - Verify if a reboot is performed
   when: ( result.status == 302 and result.location | select("match", ".*result\.html.*") )
@@ -25,7 +26,6 @@
 - name: WAF - Waiting for system to return after reboot
   when: ( waf_reboot == true )
   wait_for_connection:
-    port: 8000
     delay: 20
 
 - name: WAF - Checking if Barracuda WAF Login page is ready

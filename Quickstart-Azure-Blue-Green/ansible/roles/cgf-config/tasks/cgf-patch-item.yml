@@ -1,15 +1,15 @@
-#### WAF set item ###
-- name: Create "{{ request_name }}"
+#### CGF Patch item ###
+- name: "Patch {{ request_name }}"
   uri:
     url: "{{ request_url }}{{ request_path }}"
-    method: POST
-    user: "{{ waf_token.json.token }}"
-    password: ""
-    force_basic_auth: yes
+    method: PATCH
     body: "{{ request_body }}"
     body_format: json
+    timeout: 60
     headers:
       Content-Type: "application/json"
-    status_code: 201
+      X-API-Token: "{{ request_token }}"
+    status_code: 204
+    validate_certs: False
   register: result
   until: result.status != -1

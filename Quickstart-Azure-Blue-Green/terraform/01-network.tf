@@ -31,7 +31,11 @@ resource "azurerm_subnet" "subnet2" {
   resource_group_name  = "${azurerm_resource_group.resourcegroupvnet.name}"
   virtual_network_name = "${azurerm_virtual_network.vnet.name}"
   address_prefix       = "${var.subnet_waf[var.DEPLOYMENTCOLOR]}"
-  route_table_id       = "${azurerm_route_table.wafroute.id}"
+}
+
+resource "azurerm_subnet_route_table_association" "subnet2rt" {
+  subnet_id      = "${azurerm_subnet.subnet2.id}"
+  route_table_id = "${azurerm_route_table.wafroute.id}"
 }
 
 resource "azurerm_subnet" "subnet3" {
@@ -39,7 +43,11 @@ resource "azurerm_subnet" "subnet3" {
   resource_group_name  = "${azurerm_resource_group.resourcegroupvnet.name}"
   virtual_network_name = "${azurerm_virtual_network.vnet.name}"
   address_prefix       = "${var.subnet_web[var.DEPLOYMENTCOLOR]}"
-  route_table_id       = "${azurerm_route_table.webroute.id}"
+}
+
+resource "azurerm_subnet_route_table_association" "subnet3rt" {
+  subnet_id      = "${azurerm_subnet.subnet3.id}"
+  route_table_id = "${azurerm_route_table.webroute.id}"
 }
 
 resource "azurerm_subnet" "subnet4" {
@@ -47,7 +55,11 @@ resource "azurerm_subnet" "subnet4" {
   resource_group_name  = "${azurerm_resource_group.resourcegroupvnet.name}"
   virtual_network_name = "${azurerm_virtual_network.vnet.name}"
   address_prefix       = "${var.subnet_db[var.DEPLOYMENTCOLOR]}"
-  route_table_id       = "${azurerm_route_table.dbroute.id}"
+}
+
+resource "azurerm_subnet_route_table_association" "subnet4rt" {
+  subnet_id      = "${azurerm_subnet.subnet4.id}"
+  route_table_id = "${azurerm_route_table.dbroute.id}"
 }
 
 resource "azurerm_route_table" "webroute" {

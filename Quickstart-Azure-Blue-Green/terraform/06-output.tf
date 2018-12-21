@@ -44,6 +44,9 @@ data "template_file" "ansible_inventory" {
   template = "${file("${path.module}/ansible_inventory.tpl")}"
 
   vars {
+    cgf_hosts       = "${join("\n",data.template_file.cgf_ansible.*.rendered)}"
+    cgf_prefix      = "${var.PREFIX}"
+    cgf_password    = "${var.PASSWORD}"
     sql_hosts       = "${join("\n",data.template_file.sql_ansible.*.rendered)}"
     sql_host        = "${azurerm_network_interface.sqlifc.private_ip_address}"
     db_password     = "${var.DB_PASSWORD}"

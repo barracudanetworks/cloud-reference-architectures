@@ -11,6 +11,7 @@
     status_code: 200
   register: service
   ignore_errors: True
+
 #- debug:
 #    msg: "{{service.json}}"
 

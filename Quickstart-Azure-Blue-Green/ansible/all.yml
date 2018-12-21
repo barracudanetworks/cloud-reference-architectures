@@ -1,4 +1,14 @@
 ---
+- hosts: cgf-blue:cgf-green
+  gather_facts: no
+  roles:
+    - role: cgf-bootstrap
+
+- hosts: cgf-blue:cgf-green
+  gather_facts: no
+  roles:
+    - role: cgf-config
+
 - hosts: web:sql
   gather_facts: no
   become: yes

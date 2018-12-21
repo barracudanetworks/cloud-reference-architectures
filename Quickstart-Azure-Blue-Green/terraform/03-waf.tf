@@ -111,9 +111,14 @@ resource "azurerm_network_interface" "wafifc" {
     subnet_id                               = "${azurerm_subnet.subnet2.id}"
     private_ip_address_allocation           = "static"
     private_ip_address                      = "${element(var.waf_ip_addresses[var.DEPLOYMENTCOLOR], count.index)}"
-    load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.waflbbackend.id}"]
     load_balancer_inbound_nat_rules_ids     = ["${element(azurerm_lb_nat_rule.waflbnatrulehttp.*.id, count.index)}", "${element(azurerm_lb_nat_rule.waflbnatrulehttps.*.id, count.index)}"]
   }
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "wafifclbb" {
+  network_interface_id    = "${azurerm_network_interface.wafifc.id}"
+  ip_configuration_name   = "interface1"
+  backend_address_pool_id = "${azurerm_lb_backend_address_pool.waflbbackend.id}"
 }
 
 resource "azurerm_virtual_machine" "wafvm" {
@@ -124,6 +129,10 @@ resource "azurerm_virtual_machine" "wafvm" {
   network_interface_ids = ["${element(azurerm_network_interface.wafifc.*.id, count.index)}"]
   vm_size               = "${var.waf_vmsize[var.DEPLOYMENTCOLOR]}"
   availability_set_id   = "${azurerm_availability_set.wafavset.id}"
+
+  identity {
+    type      = "SystemAssigned"
+  }
 
   storage_image_reference {
     publisher = "barracudanetworks"
@@ -163,7 +172,7 @@ resource "azurerm_virtual_machine" "wafvm" {
 
 data "template_file" "waf_ansible" {
   count    = "${length(var.waf_ip_addresses[var.DEPLOYMENTCOLOR])}"
-  template = "${file("${path.module}/ansible_host_waf.tpl")}"
+  template = "${file("${path.module}/ansible_host.tpl")}"
 
   vars {
     name      = "${var.PREFIX}-${var.DEPLOYMENTCOLOR}-VM-WAF-${count.index}"

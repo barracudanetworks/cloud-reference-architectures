@@ -46,7 +46,7 @@
   uri:
     url: http://{{ hostvars[inventory_hostname].ansible_host }}:{{ hostvars[inventory_hostname].ansible_port }}/
     method: POST
-    body: "name=Joeri+Van+Hoof&email=jvanhoof%40barracuda.com&company=Barracuda+Networks&action=save_signed_eula&eula_hash_val={{ eula_hash_val }}"
+    body: "name_sign=Joeri+Van+Hoof&email_sign=jvanhoof%40barracuda.com&company_sign=Barracuda+Networks&action=save_signed_eula&eula_hash_val={{ eula_hash_val[0] }}"
     status_code: 200 
     headers:
       Content-Type: "application/x-www-form-urlencoded"
