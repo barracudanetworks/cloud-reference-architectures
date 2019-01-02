@@ -17,7 +17,7 @@ $location = "West Europe"
 $prefix="CUDA"
 $rg="$prefix-RG"
 
-$password = Read-Host -AsSecureString 'Please provide password for NGF
+$password = Read-Host -AsSecureString 'Please provide password for CGF
 !! BEWARE: Password complexity rules 12 characters, [A-Za-z0-9] and special char !!' 
 
 Write-Host "`nCreating Resource Group $rg"
