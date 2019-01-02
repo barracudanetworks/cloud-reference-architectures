@@ -1,7 +1,7 @@
 {
-  "itemDisplayName": "Barracuda NGF VM + data disk",
-  "description": "This template allows you to deploy a simple Barracuda NGF VM with a static IP",
-  "summary": "This template takes a minimum amount of parameters",
-  "githubUsername": "jvhoof",
-  "dateUpdated": "2017-03-08"
+  "itemDisplayName": "Barracuda CGF VMs + data disks, VNET + subnets",
+  "description": "This template allows you to deploy a Barracuda CGF VM HA cluster with UDR",
+  "summary": "This template takes a minimum number of parameters to deploy the reference architecture",
+  "githubUsername": "mercutioviz",
+  "dateUpdated": "2019-01-02"
 }
