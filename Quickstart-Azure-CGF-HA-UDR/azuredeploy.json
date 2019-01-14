@@ -5,13 +5,13 @@
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Password for the Virtual Machine. Use this password for user 'root' when connecting with the Firewall Admin utility."
+        "description": "Password for the Virtual Machine."
       }
     },
     "prefix": {
       "type": "string",
       "metadata": {
-          "description": "identifying prefix for all VM's being build. e.g WeProd would become WeProd-VM-CGF (Max 19 char, no spaces, [A-Za-z0-9]"
+          "description": "identifying prefix for all VM's being build. e.g WeProd would become WeProd-VM-NGF (Max 19 char, no spaces, [A-Za-z0-9]"
       }
     },
     "vNetAddressSpace": {
@@ -21,7 +21,7 @@
       },
       "defaultValue": "172.16.136.0/22"
     },
-    "subnetCGF": {
+    "subnetNGF": {
       "type": "string",
       "metadata": {
         "description": "Network range of the Subnet containing the NextGen Firewall (e.g. 172.16.136.0/24)"
@@ -58,8 +58,8 @@
       "metadata": {
         "description": "Version of the Barracuda CloudGen Firewall to install"
       },
-            "allowedValues": [ "7.2.205701", "7.1.306101" ],
-      "defaultValue": "7.2.205701"
+            "allowedValues": [ "latest", "8.0.0047501", "7.2.205701", "7.2.112901", "7.1.306101", "7.1.210401" ],
+      "defaultValue": "latest"
     },
     "vmSize": {
       "type": "string",
@@ -101,12 +101,12 @@
     "imagePublisher": "barracudanetworks",
     "imageOffer": "barracuda-ng-firewall",
 
-    "nsgName": "[concat(parameters('prefix'),'-NSG-CGF')]",
-    "avName": "[concat(parameters('prefix'),'-AV-CGF')]",
+    "nsgName": "[concat(parameters('prefix'),'-NSG-NGF')]",
+    "avName": "[concat(parameters('prefix'),'-AV-NGF')]",
     "vNetName": "[concat(parameters('prefix'),'-VNET')]",
     "vNetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vNetName'))]",
-    "subnetNameCGF": "[concat(parameters('prefix'),'-SUBNET-CGF')]",
-    "subnetRefCGF": "[resourceID('Microsoft.Network/virtualNetworks/subnets',variables('vNetName'),variables('subnetNameCGF'))]",
+    "subnetNameNGF": "[concat(parameters('prefix'),'-SUBNET-NGF')]",
+    "subnetRefNGF": "[resourceID('Microsoft.Network/virtualNetworks/subnets',variables('vNetName'),variables('subnetNameNGF'))]",
     "subnetNameRed": "[concat(parameters('prefix'),'-SUBNET-RED')]",
     "subnetNameGreen": "[concat(parameters('prefix'),'-SUBNET-GREEN')]",
     "rtableNameRed": "[concat( parameters('prefix'), '-RT-FOR-RED' )]",
@@ -114,17 +114,17 @@
     "rtableNameGreen": "[concat( parameters('prefix'), '-RT-FOR-GREEN' )]",
     "rtableRefGreen": "[resourceID('Microsoft.Network/routeTables',variables('rtableNameGreen'))]",
 
-    "cgfVmName1": "[concat(parameters('prefix'),'-VM-CGF-A')]",
-    "cgfVmName2": "[concat(parameters('prefix'),'-VM-CGF-B')]",
-    "cgfNicName1": "[concat(variables('cgfVmName1'),'-NIC')]",
-    "cgfNicName2": "[concat(variables('cgfVmName2'),'-NIC')]",
-    "cgfPIPAddressName1": "[concat(variables('cgfVmName1'),'-PIP')]",
-    "cgfPIPAddressName2": "[concat(variables('cgfVmName2'),'-PIP')]",
-    "cgfPIPAddressType": "Static",
+    "ngfVmName1": "[concat(parameters('prefix'),'-VM-NGF-A')]",
+    "ngfVmName2": "[concat(parameters('prefix'),'-VM-NGF-B')]",
+    "ngfNicName1": "[concat(variables('ngfVmName1'),'-NIC')]",
+    "ngfNicName2": "[concat(variables('ngfVmName2'),'-NIC')]",
+    "ngfPIPAddressName1": "[concat(variables('ngfVmName1'),'-PIP')]",
+    "ngfPIPAddressName2": "[concat(variables('ngfVmName2'),'-PIP')]",
+    "ngfPIPAddressType": "Static",
 
-    "lbPIPAddressName": "[concat(parameters('prefix'),'-CGF-LB-PIP')]",
-    "dnsNameForCGF": "[toLower( concat( parameters('prefix'), '-cgf-', uniqueString(resourceGroup().id) ) )]",
-    "lbName": "[concat(parameters('prefix'),'-LB-CGF')]",
+    "lbPIPAddressName": "[concat(parameters('prefix'),'-NGF-LB-PIP')]",
+    "dnsNameForNGF": "[toLower( concat( parameters('prefix'), '-ngf-', uniqueString(resourceGroup().id) ) )]",
+    "lbName": "[concat(parameters('prefix'),'-LB-NGF')]",
     "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
     "lbPIPID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('lbPIPAddressName'))]",
     "lbFrontEndPoolID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]",
@@ -134,14 +134,14 @@
     "adminUsername": "notused",
     "singleQuotationMark": "'",
 
-    "cgfSubnetSplit": "[split( parameters( 'subnetCGF' ), '/' )]",
-    "cgfSubnetAddrSplit": "[split( variables( 'cgfSubnetSplit' )[0], '.' )]",
-    "cgfSubnetMask": "[variables( 'cgfSubnetSplit' )[1]]",
-    "cgfSubnetDefaultGw": "[concat( variables( 'cgfSubnetAddrSplit' )[0], '.', variables( 'cgfSubnetAddrSplit' )[1], '.', variables( 'cgfSubnetAddrSplit' )[2], '.', add( int( variables( 'cgfSubnetAddrSplit' )[3]), 1 ))]",
-    "cgfVmAddress1": "[concat( variables( 'cgfSubnetAddrSplit' )[0], '.', variables( 'cgfSubnetAddrSplit' )[1], '.', variables( 'cgfSubnetAddrSplit' )[2], '.', add( int( variables( 'cgfSubnetAddrSplit' )[3]), 4 ))]",
-    "cgfVmAddress2": "[concat( variables( 'cgfSubnetAddrSplit' )[0], '.', variables( 'cgfSubnetAddrSplit' )[1], '.', variables( 'cgfSubnetAddrSplit' )[2], '.', add( int( variables( 'cgfSubnetAddrSplit' )[3]), 5 ))]",
-    "cgfCustomData1": "[Base64(concat( '#!/bin/bash\n\n/opb/cloud-setmip ', variables('cgfVmAddress1'), ' ', variables( 'cgfSubnetMask' ), ' ', variables( 'cgfSubnetDefaultGw' ), '\n', 'echo ', variables('singleQuotationMark'), parameters( 'adminPassword' ), variables('singleQuotationMark'), ' | /opb/create-dha -s S1 -c -o ', variables('cgfVmAddress2'), ' -n ', variables( 'cgfSubnetMask' ), ' -g ', variables( 'cgfSubnetDefaultGw' ), '\n'))]",
-    "cgfCustomData2": "[Base64('\n')]"
+    "ngfSubnetSplit": "[split( parameters( 'subnetNGF' ), '/' )]",
+    "ngfSubnetAddrSplit": "[split( variables( 'ngfSubnetSplit' )[0], '.' )]",
+    "ngfSubnetMask": "[variables( 'ngfSubnetSplit' )[1]]",
+    "ngfSubnetDefaultGw": "[concat( variables( 'ngfSubnetAddrSplit' )[0], '.', variables( 'ngfSubnetAddrSplit' )[1], '.', variables( 'ngfSubnetAddrSplit' )[2], '.', add( int( variables( 'ngfSubnetAddrSplit' )[3]), 1 ))]",
+    "ngfVmAddress1": "[concat( variables( 'ngfSubnetAddrSplit' )[0], '.', variables( 'ngfSubnetAddrSplit' )[1], '.', variables( 'ngfSubnetAddrSplit' )[2], '.', add( int( variables( 'ngfSubnetAddrSplit' )[3]), 4 ))]",
+    "ngfVmAddress2": "[concat( variables( 'ngfSubnetAddrSplit' )[0], '.', variables( 'ngfSubnetAddrSplit' )[1], '.', variables( 'ngfSubnetAddrSplit' )[2], '.', add( int( variables( 'ngfSubnetAddrSplit' )[3]), 5 ))]",
+    "ngfCustomData1": "[Base64(concat( '#!/bin/bash\n\n/opb/cloud-setmip ', variables('ngfVmAddress1'), ' ', variables( 'ngfSubnetMask' ), ' ', variables( 'ngfSubnetDefaultGw' ), '\n', 'echo ', variables('singleQuotationMark'), parameters( 'adminPassword' ), variables('singleQuotationMark'), ' | /opb/create-dha -s S1 -c -o ', variables('ngfVmAddress2'), ' -n ', variables( 'ngfSubnetMask' ), ' -g ', variables( 'ngfSubnetDefaultGw' ), '\n'))]",
+    "ngfCustomData2": "[Base64('\n')]"
   },
   "resources": [
     {
@@ -200,9 +200,9 @@
         },
         "subnets": [
           {
-            "name": "[variables('subnetNameCGF')]",
+            "name": "[variables('subnetNameNGF')]",
             "properties": {
-              "addressPrefix": "[parameters('subnetCGF')]",
+              "addressPrefix": "[parameters('subnetNGF')]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
               }
@@ -241,7 +241,7 @@
             "properties": {
               "addressPrefix": "0.0.0.0/0",
               "nextHopType": "VirtualAppliance",
-              "nextHopIpAddress": "[variables('cgfVmAddress1')]"
+              "nextHopIpAddress": "[variables('ngfVmAddress1')]"
             }
           },
           {
@@ -249,7 +249,7 @@
             "properties": {
               "addressPrefix": "[parameters('subnetGreen')]",
               "nextHopType": "VirtualAppliance",
-              "nextHopIpAddress": "[variables('cgfVmAddress1')]"
+              "nextHopIpAddress": "[variables('ngfVmAddress1')]"
             }
           }
         ]
@@ -267,7 +267,7 @@
             "properties": {
               "addressPrefix": "0.0.0.0/0",
               "nextHopType": "VirtualAppliance",
-              "nextHopIpAddress": "[variables('cgfVmAddress1')]"
+              "nextHopIpAddress": "[variables('ngfVmAddress1')]"
             }
           },
           {
@@ -275,7 +275,7 @@
             "properties": {
               "addressPrefix": "[parameters('subnetRed')]",
               "nextHopType": "VirtualAppliance",
-              "nextHopIpAddress": "[variables('cgfVmAddress1')]"
+              "nextHopIpAddress": "[variables('ngfVmAddress1')]"
             }
           }
         ]
@@ -301,9 +301,9 @@
       "name": "[variables('lbPIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('cgfPIPAddressType')]",
+        "publicIPAllocationMethod": "[variables('ngfPIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[variables('dnsNameForCGF')]"
+          "domainNameLabel": "[variables('dnsNameForNGF')]"
         }
       }
     },
@@ -314,7 +314,7 @@
       "location": "[resourceGroup().location]",
       "comments":"LoadBalancer for the Barracuda Next Gen Firewall F cluster",            
       "tags": {
-          "displayName": "CGFLB"
+          "displayName": "NGFLB"
       },
       "dependsOn": [
           "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPIPAddressName'))]",
@@ -430,28 +430,28 @@
     {
       "apiVersion": "[variables('networkApiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('cgfPIPAddressName1')]",
+      "name": "[variables('ngfPIPAddressName1')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('cgfPIPAddressType')]"
+        "publicIPAllocationMethod": "[variables('ngfPIPAddressType')]"
       }
     },
     {
       "apiVersion": "[variables('networkApiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('cgfPIPAddressName2')]",
+      "name": "[variables('ngfPIPAddressName2')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('cgfPIPAddressType')]"
+        "publicIPAllocationMethod": "[variables('ngfPIPAddressType')]"
       }
     },
     {
       "apiVersion": "[variables('networkApiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('cgfNicName1')]",
+      "name": "[variables('ngfNicName1')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('cgfPIPAddressName1'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('ngfPIPAddressName1'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('vNetName'))]",
         "[variables('lbID')]"
       ],
@@ -462,12 +462,12 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables( 'cgfVmAddress1' )]",
+              "privateIPAddress": "[variables( 'ngfVmAddress1' )]",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('cgfPIPAddressName1'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('ngfPIPAddressName1'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRefCGF')]"
+                "id": "[variables('subnetRefNGF')]"
               },
               "loadBalancerBackendAddressPools": [
                 {
@@ -482,10 +482,10 @@
     {
       "apiVersion": "[variables('networkApiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('cgfNicName2')]",
+      "name": "[variables('ngfNicName2')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('cgfPIPAddressName2'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('ngfPIPAddressName2'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('vNetName'))]",
         "[variables('lbID')]"
       ],
@@ -496,12 +496,12 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables( 'cgfVmAddress2' )]",
+              "privateIPAddress": "[variables( 'ngfVmAddress2' )]",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('cgfPIPAddressName2'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('ngfPIPAddressName2'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRefCGF')]"
+                "id": "[variables('subnetRefNGF')]"
               },
               "loadBalancerBackendAddressPools": [
                 {
@@ -520,7 +520,7 @@
       "identity": { 
         "type": "SystemAssigned"
       },
-      "name": "[variables('cgfVmName1')]",
+      "name": "[variables('ngfVmName1')]",
       "location": "[resourceGroup().location]",
       "plan": {
         "name": "[parameters('imageSKU')]",
@@ -528,7 +528,7 @@
         "Publisher": "[variables('imagePublisher')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('cgfNicName1'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('ngfNicName1'))]",
         "[resourceId('Microsoft.Compute/availabilitySets',variables('avName'))]"
       ],
       "properties": {
@@ -539,10 +539,10 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('cgfVmName1')]",
+          "computerName": "[variables('ngfVmName1')]",
           "adminUsername": "[variables('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[variables( 'cgfCustomData1')]"
+          "customData": "[variables( 'ngfCustomData1')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -552,7 +552,7 @@
             "version": "[parameters('version')]"
           },
           "osDisk": {
-            "name": "[concat(variables('cgfVmName1'),'-osdisk')]",
+            "name": "[concat(variables('ngfVmName1'),'-osdisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -560,7 +560,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('cgfNicName1'))]",
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('ngfNicName1'))]",
               "properties": {
                 "primary": true
               }
@@ -576,7 +576,7 @@
       "identity": { 
         "type": "SystemAssigned"
       },
-      "name": "[variables('cgfVmName2')]",
+      "name": "[variables('ngfVmName2')]",
       "location": "[resourceGroup().location]",
       "plan": {
         "name": "[parameters('imageSKU')]",
@@ -584,7 +584,7 @@
         "Publisher": "[variables('imagePublisher')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('cgfNicName2'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('ngfNicName2'))]",
         "[resourceId('Microsoft.Compute/availabilitySets',variables('avName'))]"
       ],
       "properties": {
@@ -595,10 +595,10 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('cgfVmName2')]",
+          "computerName": "[variables('ngfVmName2')]",
           "adminUsername": "[variables('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[variables( 'cgfCustomData2')]" 
+          "customData": "[variables( 'ngfCustomData2')]" 
         },
         "storageProfile": {
           "imageReference": {
@@ -608,7 +608,7 @@
             "version": "[parameters('version')]"
           },
           "osDisk": {
-            "name": "[concat(variables('cgfVmName2'),'-osdisk')]",
+            "name": "[concat(variables('ngfVmName2'),'-osdisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -616,7 +616,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('cgfNicName2'))]",
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('ngfNicName2'))]",
               "properties": {
                 "primary": true
               }
@@ -627,15 +627,15 @@
     }
   ],
   "outputs": {
-    "CGF-A": {
+    "NGF-A": {
       "type": "string",
-      "value": "[reference(variables('cgfPIPAddressName1')).ipAddress]"
+      "value": "[reference(variables('ngfPIPAddressName1')).ipAddress]"
     },
-    "CGF-B": {
+    "NGF-B": {
       "type": "string",
-      "value": "[reference(variables('cgfPIPAddressName1')).ipAddress]"
+      "value": "[reference(variables('ngfPIPAddressName1')).ipAddress]"
     },
-    "CGF-LB": {
+    "NGF-LB": {
       "type": "string",
       "value": "[reference(variables('lbPIPAddressName')).dnsSettings.fqdn]"
     }
