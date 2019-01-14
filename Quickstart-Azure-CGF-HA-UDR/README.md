@@ -29,15 +29,15 @@ Following resources will be created by the template:
 - Two Barracuda CloudGen Firewall F virtual machines with 1 network interface each and public IP
 - Both CGF systems are deployed in an Availability Set
 
-**Note** The backend subnets and resources are *not* automatically created by the template. This has to be done manually after template deployment has finished.
+**Note** Other than the read and green subnets, the backend subnets and resources are not automatically created by the template. This has to be done manually after template deployment has finished.
 
 ## Next Steps
 
-After successful deployment you can manage them using CloudGen Admin application available from Barracuda Download Portal. Management IP addresses you'll find in firewall instances properties, username is *root* and the password is what you provided during template deployment.
+After successful deployment you can manage them using [CloudGen Firewall Admin](https://d.barracudanetworks.com/ngfirewall/8.0.0/FirewallAdmin_8.0.0-819.exe) application. The Firewall Admin application, as well as other related resources, is also available from the [Barracuda Download Portal](https://login.barracudanetworks.com/auth/login/). Connect to each firewall instance separately using the public IP address found in the VM properties. The initial username is *root* and the password is what you provided during template deployment. 
 
 ## Post Deployment Configuration
 
-Visit our [campus website](https://campus.barracuda.com/product/nextgenfirewallf/doc/53248931/implementation-guide-nextgen-firewall-in-azure/) for more in-depth information on deployment and management.
+Visit our [campus website](https://campus.barracuda.com/product/cloudgenfirewall/doc/73718958/implementation-guide-cloudgen-firewall-in-azure/) for more in-depth information on deployment and management.
 
 It is also recommended you harden management access by enabling multifactor or key authentication and by restricting access to management interface using Management ACL: [How to Change the Root Password and Management ACL](https://campus.barracuda.com/product/cloudgenfirewall/doc/79463301/how-to-change-the-root-password-and-management-acl/)
 
