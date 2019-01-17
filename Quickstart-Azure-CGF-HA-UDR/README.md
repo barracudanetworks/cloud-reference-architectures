@@ -37,11 +37,11 @@ After the deployment has completed you can log in to the primary firewall using 
 
 Launch Firewall Admin and connect to the public IP address of the primary firewall. (You may also employ a Windows jump host deployed into the same VNET and subnet as the two CGF virtual machines.) Connect to the firewall with username of “root” and the password you specified in the template.
 
-![CGF Login](images/CGF-login-1.png)
+![CGF Login](images/CGF-Login-1.png)
 
 The first time you log in you will be asked to trust the certificate. Click Trust, and then will be at the dashboard.
 
-![CGF Login](images/CGF-login-2.png)
+![CGF Login](images/CGF-Login-2.png)
 
 For BYOL deployments you will also need to activate the license as described in this Barracuda [Campus article](https://campus.barracuda.com/product/cloudgenfirewall/doc/79463377/how-to-activate-and-license-a-stand-alone-virtual-or-public-cloud-firewall-or-control-center). Note: as mentioned above, it is sometimes convenient to deploy a Windows bastion host in the firewall subnet. You can RDP into the bastion host and run the Firewall Admin utility there. This is especially helpful if you are testing HA failover scenarios.
 
