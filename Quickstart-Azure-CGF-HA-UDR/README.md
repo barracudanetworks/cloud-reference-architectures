@@ -61,7 +61,7 @@ The CGF can also protect inbound connections. As an example we will create a des
 -	Click the drop-down and change Block to Dst-NAT
 -	Change the rule name from NewRule to SSH-221
 -	Under Source, click the drop-down and select Internet
--	Under Service, click the drop-down and select <explicit-srv>
+-	Under Service, click the drop-down and select 'explicit-srv'
 - - Double-click in the grid under <explicit-srv> to open the edit/create service object dialog
 - - Click New Object (second dialog opens)
 - - Put “221” in the Port Range field and click OK then click OK again
