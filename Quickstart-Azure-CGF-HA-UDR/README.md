@@ -31,6 +31,24 @@ Following resources will be created by the template:
 
 **Note** Other than the read and green subnets, the backend subnets and resources are not automatically created by the template. This has to be done manually after template deployment has finished.
 
+## During Deployment
+Deployment can take 10-15 minutes to complete, however there are a few things that can be done during this time. In the Azure portal navigate to the resource group and click the refresh button every few seconds until you see that the virtual network and the two virtual machines appear in the list of resources.
+
+In the resource group view, click Access Control (IAM) > Add Role Assignment, then select the following:
+Role: Contributor
+Assign access to: Virtual Machine
+Subscription: the subscription containing the CGF virtual machines
+Select: choose the two CGF machines being deployed
+
+The settings will look similar to the following image:
+-IMAGE HERE-
+
+Click Save.
+
+Navigate in the portal to each of the CGF virtual machines and make and note of the public IP addresses. You will need these for the firewall administration connection. Also navigate to the externally facing load balancer and make a note of the front-end IP address. This is the IP address to which clients will connect. It is also the target for any DNS A records that need to connect to resources behind the firewall cluster.
+
+Optionally you may wish to launch a Windows Server instance in the CGF subnet to serve as a bastion host.
+
 ## Next Steps
 
 After the deployment has completed you can log in to the primary firewall using the Barracuda Firewall Admin utility. (Download [here](https://d.barracudanetworks.com/ngfirewall/8.0.0/FirewallAdmin_8.0.0-819.exe).) This is a self-contained Windows binary that does not require installation. Detailed information about the Firewall Admin utility can be found in this Barracuda [Campus article](https://campus.barracuda.com/product/cloudgenfirewall/doc/73719519/barracuda-firewall-admin/).
