@@ -11,7 +11,7 @@
     "prefix": {
       "type": "string",
       "metadata": {
-          "description": "identifying prefix for all VM's being build. e.g WeProd would become WeProd-VM-NGF (Max 19 char, no spaces, [A-Za-z0-9]"
+          "description": "identifying prefix for all VM's being build. e.g WeProd would become WeProd-VM-CGF (Max 19 char, no spaces, [A-Za-z0-9]"
       }
     },
     "vNetAddressSpace": {
@@ -21,7 +21,7 @@
       },
       "defaultValue": "172.16.136.0/22"
     },
-    "subnetNGF": {
+    "subnetCGF": {
       "type": "string",
       "metadata": {
         "description": "Network range of the Subnet containing the NextGen Firewall (e.g. 172.16.136.0/24)"
