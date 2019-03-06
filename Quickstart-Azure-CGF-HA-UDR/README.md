@@ -41,7 +41,7 @@ In the resource group view, click Access Control (IAM) > Add Role Assignment, th
 * Select: choose the two CGF machines being deployed
 
 The settings will look similar to the following image:
--IMAGE HERE-
+![IAM](images/IAM-for-RG-unedited.png)
 
 Click Save.
 
