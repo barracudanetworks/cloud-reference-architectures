@@ -35,10 +35,10 @@ Following resources will be created by the template:
 Deployment can take 10-15 minutes to complete, however there are a few things that can be done during this time. In the Azure portal navigate to the resource group and click the refresh button every few seconds until you see that the virtual network and the two virtual machines appear in the list of resources.
 
 In the resource group view, click Access Control (IAM) > Add Role Assignment, then select the following:
-Role: Contributor
-Assign access to: Virtual Machine
-Subscription: the subscription containing the CGF virtual machines
-Select: choose the two CGF machines being deployed
+* Role: Contributor
+* Assign access to: Virtual Machine
+* Subscription: the subscription containing the CGF virtual machines
+* Select: choose the two CGF machines being deployed
 
 The settings will look similar to the following image:
 -IMAGE HERE-
