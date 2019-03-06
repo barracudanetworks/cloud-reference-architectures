@@ -91,7 +91,12 @@ The new rule will look similar to this:
 
 ![CGF Login](images/CGF-New-DstNAT-rule.png)
 
-The new rule is inserted into the list at #11 and BLOCKALL becomes rule #12. Click Send Changes, Activate, and Activate to apply the rule. The firewall will now accept SSH connections on port 221 and redirect them to the specified host. In the above example the connections would go to 172.16.137.4. This method can be employed for inbound connections using any TCP protocol, such as RDP, HTTP, and HTTPS.
+The new rule is inserted into the list at #11 and BLOCKALL becomes rule #12. Click Send Changes, Activate, and Activate to apply the rule. 
+
+Lastly, you will need to allow connections on TCP port 221 to come through the load balancer. In the Azure portal, select the load balancer, then select Load Balancing Rules and then click +Add. Create a new load balancing rule for port 221. The new rule will appear similar to this:
+![New LB Rule](images/CGF-LB-Rule-port-222.png)
+
+The firewall will now accept SSH connections on port 221 and redirect them to the specified host. In the above example the connections would go to 172.16.137.4. This method can be employed for inbound connections using any TCP protocol, such as RDP, HTTP, and HTTPS.
 
 More information on configuring the Barracuda CloudGen Firewall can be found at [Barracuda Campus](https://campus.barracuda.com/product/cloudgenfirewall/doc/79462645/overview/). 
 
