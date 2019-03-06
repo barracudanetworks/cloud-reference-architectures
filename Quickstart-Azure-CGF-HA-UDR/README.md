@@ -101,11 +101,12 @@ The firewall will now accept SSH connections on port 221 and redirect them to th
 ### Verify Cloud Integration
 
 The high-availability (HA) feature makes use of Azure user-defined routing (UDR). In the Firewall Admin utility go to Configuration Tree > Advanced Configuration > Cloud Integration. Click Lock and then fill in the Resource Group and VNET name as well as the Route Check Interval. The finished configuration looks like this:
--IMAGE HERE-
+![Cloud Integration](images/CGF-Cloud-Integration.png)
+
 Note that the VNET name is case-sensitive.
 
 Click Send Changes, Activate, Activate. In a few moments the CGF units will communicate with the Azure fabric and update the route tables as needed. Naviate to CONTROL > Network and select the Azure UDR tab to see the routes that have been configured:
--IMAGE HERE-
+![UDR Routes](images/CGF-UDR-Routes.png)
 
 ## Further Information
 
