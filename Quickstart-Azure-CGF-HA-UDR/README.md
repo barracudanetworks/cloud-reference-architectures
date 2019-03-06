@@ -98,11 +98,20 @@ Lastly, you will need to allow connections on TCP port 221 to come through the l
 
 The firewall will now accept SSH connections on port 221 and redirect them to the specified host. In the above example the connections would go to 172.16.137.4. This method can be employed for inbound connections using any TCP protocol, such as RDP, HTTP, and HTTPS.
 
-More information on configuring the Barracuda CloudGen Firewall can be found at [Barracuda Campus](https://campus.barracuda.com/product/cloudgenfirewall/doc/79462645/overview/). 
+### Verify Cloud Integration
 
-## Post Deployment Configuration
+The high-availability (HA) feature makes use of Azure user-defined routing (UDR). In the Firewall Admin utility go to Configuration Tree > Advanced Configuration > Cloud Integration. Click Lock and then fill in the Resource Group and VNET name as well as the Route Check Interval. The finished configuration looks like this:
+-IMAGE HERE-
+Note that the VNET name is case-sensitive.
 
-Visit our [campus website](https://campus.barracuda.com/product/cloudgenfirewall/doc/73718958/implementation-guide-cloudgen-firewall-in-azure/) for more in-depth information on deployment and management.
+Click Send Changes, Activate, Activate. In a few moments the CGF units will communicate with the Azure fabric and update the route tables as needed. Naviate to CONTROL > Network and select the Azure UDR tab to see the routes that have been configured:
+-IMAGE HERE-
+
+## Further Information
+
+General information on configuring the Barracuda CloudGen Firewall can be found at [Barracuda Campus](https://campus.barracuda.com/product/cloudgenfirewall/doc/79462645/overview/). 
+
+Visit our [campus website](https://campus.barracuda.com/product/cloudgenfirewall/doc/73718958/implementation-guide-cloudgen-firewall-in-azure/) for more in-depth information on deployment and management in an Azure environment.
 
 It is also recommended you harden management access by enabling multifactor or key authentication and by restricting access to management interface using Management ACL: [How to Change the Root Password and Management ACL](https://campus.barracuda.com/product/cloudgenfirewall/doc/79463301/how-to-change-the-root-password-and-management-acl/)
 
