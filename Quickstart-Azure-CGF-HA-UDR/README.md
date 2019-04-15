@@ -47,7 +47,7 @@ Click Save.
 
 Navigate in the portal to each of the CGF virtual machines and make and note of the public IP addresses. You will need these for the firewall administration connection. Also navigate to the externally facing load balancer and make a note of the front-end IP address. This is the IP address to which clients will connect. It is also the target for any DNS A records that need to connect to resources behind the firewall cluster.
 
-Optionally you may wish to launch a Windows Server instance in the CGF subnet to serve as a bastion host.
+Optionally you may wish to launch a Windows Server instance in the CGF subnet to serve as a jump host.
 
 ## Next Steps
 
@@ -61,7 +61,7 @@ The first time you log in you will be asked to trust the certificate. Click Trus
 
 ![CGF Login](images/CGF-Login-2.png)
 
-For BYOL deployments you will also need to activate the license as described in this Barracuda [Campus article](https://campus.barracuda.com/product/cloudgenfirewall/doc/79463377/how-to-activate-and-license-a-stand-alone-virtual-or-public-cloud-firewall-or-control-center). Note: as mentioned above, it is sometimes convenient to deploy a Windows bastion host in the firewall subnet. You can RDP into the bastion host and run the Firewall Admin utility there. This is especially helpful if you are testing HA failover scenarios.
+For BYOL deployments you will also need to activate the license as described in this Barracuda [Campus article](https://campus.barracuda.com/product/cloudgenfirewall/doc/79463377/how-to-activate-and-license-a-stand-alone-virtual-or-public-cloud-firewall-or-control-center). Note: as mentioned above, it is sometimes convenient to deploy a Windows jump host in the firewall subnet. You can RDP into the jump host and run the Firewall Admin utility there. This is especially helpful if you are testing HA failover scenarios.
 
 To test the firewall it is necessary to have at least one host in a private subnet. In the Azure portal deploy a Windows or Linux machine in the red or green subnet. (You may even wish to deploy a host in each subnet to test east-west traffic flowing through the firewall.) Make sure that the host you deploy does not have a public IP address and that it does not have an NSG assigned. (It is possible to have an NSG, however in this scenario that would cause unnecessary redundancy since the CGF can perform all the functions of an NSG and more.)
 
