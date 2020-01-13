@@ -113,7 +113,6 @@
     "imageOffer": "barracuda-ng-firewall",
 
     "nsgName": "[concat(parameters('prefix'),'-NSG-CGF')]",
-    "avName": "[concat(parameters('prefix'),'-AV-CGF')]",
     "vNetName": "[concat(parameters('prefix'),'-VNET')]",
     "vNetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vNetName'))]",
     "subnetNameCGF": "[concat(parameters('prefix'),'-SUBNET-CGF')]",
@@ -292,20 +291,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "apiVersion": "[variables('computeApiVersion')]",
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[variables('avName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [],
-      "properties": {
-          "platformFaultDomainCount": 2,
-          "platformUpdateDomainCount": 5
-      },
-      "sku": {
-        "name": "Aligned"
       }
     },
     {
@@ -550,13 +535,9 @@
         "Publisher": "[variables('imagePublisher')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('cgfNicName1'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets',variables('avName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('cgfNicName1'))]"
       ],
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('avName'))]"
-        },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
@@ -609,13 +590,9 @@
         "Publisher": "[variables('imagePublisher')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('cgfNicName2'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets',variables('avName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('cgfNicName2'))]"
       ],
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('avName'))]"
-        },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
