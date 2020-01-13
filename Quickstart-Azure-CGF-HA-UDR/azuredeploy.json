@@ -140,7 +140,7 @@
     "cgfSubnetDefaultGw": "[concat( variables( 'cgfSubnetAddrSplit' )[0], '.', variables( 'cgfSubnetAddrSplit' )[1], '.', variables( 'cgfSubnetAddrSplit' )[2], '.', add( int( variables( 'cgfSubnetAddrSplit' )[3]), 1 ))]",
     "cgfVmAddress1": "[concat( variables( 'cgfSubnetAddrSplit' )[0], '.', variables( 'cgfSubnetAddrSplit' )[1], '.', variables( 'cgfSubnetAddrSplit' )[2], '.', add( int( variables( 'cgfSubnetAddrSplit' )[3]), 4 ))]",
     "cgfVmAddress2": "[concat( variables( 'cgfSubnetAddrSplit' )[0], '.', variables( 'cgfSubnetAddrSplit' )[1], '.', variables( 'cgfSubnetAddrSplit' )[2], '.', add( int( variables( 'cgfSubnetAddrSplit' )[3]), 5 ))]",
-    "cgfCustomData1": "[Base64(concat( '#!/bin/bash\n\n/opb/cloud-setmip ', variables('cgfVmAddress1'), ' ', variables( 'cgfSubnetMask' ), ' ', variables( 'cgfSubnetDefaultGw' ), '\n', 'echo ', variables('singleQuotationMark'), parameters( 'adminPassword' ), variables('singleQuotationMark'), ' | /opb/create-dha -s S1 -c -o ', variables('cgfVmAddress2'), ' -n ', variables( 'cgfSubnetMask' ), ' -g ', variables( 'cgfSubnetDefaultGw' ), '\n'))]",
+    "cgfCustomData1": "[Base64(concat( '#!/bin/bash\n\n/opb/cloud-setmip ', variables('cgfVmAddress1'), ' ', variables( 'cgfSubnetMask' ), ' ', variables( 'cgfSubnetDefaultGw' ), '\n', 'echo ', variables('singleQuotationMark'), parameters( 'adminPassword' ), variables('singleQuotationMark'), ' | /opb/create-dha -s S1 -c -o ', variables('cgfVmAddress2'), ' -g ', variables( 'cgfSubnetDefaultGw' ), '\n'))]",
     "cgfCustomData2": "[Base64('\n')]"
   },
   "resources": [
