@@ -69,6 +69,17 @@
         "description": "Size of the VMs to be created"
       }
     },
+      "enableREST": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "no",
+        "metadata": {
+        "description": "Enable REST API Interface for the CGFs deployed"
+      }
+    },
     "ccManaged": {
       "type": "string",
       "allowedValues": [
@@ -79,19 +90,19 @@
     },
     "ccClusterName": {
       "type": "string",
-      "defaultValue": ""
+      "defaultValue": "only used when ccManaged set to yes"
     },
     "ccRangeId": {
       "type": "string",
-      "defaultValue": ""
+      "defaultValue": "only used when ccManaged set to yes"
     },
     "ccIpAddress": {
       "type": "string",
-      "defaultValue": ""
+      "defaultValue": "only used when ccManaged set to yes"
     },
     "ccSecret": {
       "type": "securestring",
-      "defaultValue": ""
+      "defaultValue": "only used when ccManaged set to yes"
     }
   },
   "variables": {
@@ -141,7 +152,9 @@
     "cgfVmAddress1": "[concat( variables( 'cgfSubnetAddrSplit' )[0], '.', variables( 'cgfSubnetAddrSplit' )[1], '.', variables( 'cgfSubnetAddrSplit' )[2], '.', add( int( variables( 'cgfSubnetAddrSplit' )[3]), 4 ))]",
     "cgfVmAddress2": "[concat( variables( 'cgfSubnetAddrSplit' )[0], '.', variables( 'cgfSubnetAddrSplit' )[1], '.', variables( 'cgfSubnetAddrSplit' )[2], '.', add( int( variables( 'cgfSubnetAddrSplit' )[3]), 5 ))]",
     "cgfCustomData1": "[Base64(concat( '#!/bin/bash\n\n/opb/cloud-setmip ', variables('cgfVmAddress1'), ' ', variables( 'cgfSubnetMask' ), ' ', variables( 'cgfSubnetDefaultGw' ), '\n', 'echo ', variables('singleQuotationMark'), parameters( 'adminPassword' ), variables('singleQuotationMark'), ' | /opb/create-dha -s S1 -c -o ', variables('cgfVmAddress2'), ' -g ', variables( 'cgfSubnetDefaultGw' ), '\n'))]",
-    "cgfCustomData2": "[Base64('\n')]"
+    "cgfCustomData2": "[Base64('\n')]",
+    "cgfCustomDataCC1": "[base64(concat('#!/bin/bash\n\n', 'echo \"*/2 * * * * root echo \\\"', parameters( 'ccSecret' ), '\\\" | /opt/phion/bin/getpar -a ', parameters('ccIpAddress'), ' -r ', parameters( 'ccRangeId' ), ' -c ', parameters( 'ccClusterName' ), ' -b ', variables( 'cgfVmName1' ), ' -d /opt/phion/update/box.par -s --verbosity 10 >> /tmp/getpar.log && /etc/rc.d/init.d/phion stop && /etc/rc.d/init.d/phion start && rm /etc/cron.d/getpar\" > /etc/cron.d/getpar\n'))]",
+    "cgfCustomDataCC2": "[base64(concat('#!/bin/bash\n\n', 'echo \"*/2 * * * * root echo \\\"', parameters( 'ccSecret' ), '\\\" | /opt/phion/bin/getpar -a ', parameters('ccIpAddress'), ' -r ', parameters( 'ccRangeId' ), ' -c ', parameters( 'ccClusterName' ), ' -b ', variables( 'cgfVmName2' ), ' -d /opt/phion/update/box.par -s --verbosity 10 >> /tmp/getpar.log && /etc/rc.d/init.d/phion stop && /etc/rc.d/init.d/phion start && rm /etc/cron.d/getpar\" > /etc/cron.d/getpar\n'))]"
   },
   "resources": [
     {
