@@ -443,6 +443,9 @@
     {
       "apiVersion": "[variables('networkApiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
+      "zones": [
+        "1"
+      ],
       "name": "[variables('cgfPIPAddressName1')]",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -452,6 +455,9 @@
     {
       "apiVersion": "[variables('networkApiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
+      "zones": [
+        "2"
+      ],
       "name": "[variables('cgfPIPAddressName2')]",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -533,6 +539,9 @@
       "identity": { 
         "type": "SystemAssigned"
       },
+      "zones": [
+        "1"
+      ],
       "name": "[variables('cgfVmName1')]",
       "location": "[resourceGroup().location]",
       "plan": {
@@ -589,6 +598,9 @@
       "identity": { 
         "type": "SystemAssigned"
       },
+      "zones": [
+        "2"
+      ],
       "name": "[variables('cgfVmName2')]",
       "location": "[resourceGroup().location]",
       "plan": {
