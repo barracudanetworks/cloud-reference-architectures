@@ -1,7 +1,7 @@
 # Barracuda CloudGen Firewall F Series for Azure - High Availability Cluster with Cloud Integration
 
 ## Introduction
-To best take advantage of the power and flexibility of the Azure cloud it is important to deploy firewall devices in a highly available (HA) pair using an availability set. In cases where the standard load balancer with HA ports is not feasible the traditional HA configuration using Barracuda's Cloud Integration can be employed.
+To best take advantage of the power and flexibility of the Azure cloud it is important to deploy firewall devices in a highly available (HA) pair using availability zones. In cases where the standard load balancer with HA ports is not feasible the traditional HA configuration using Barracuda's Cloud Integration can be employed.
 
 This Azure Resource Manager (ARM) template will deploy a cluster of Barracuda CloudGen Firewall virtual machines in a new virtual network (VNET). Deployment is done in a one-armed fashion where north-south (traffic entering and leaving the VNET), east-west (traffic between hosts within the VNET), and VPN tunnel traffic can be intercepted and inspected based on User Defined Routing (UDR). UDR is applied on a per-subnet basis. Additionally, this template will deploy an Azure Load Balancer with an external IP address to direct the traffic to the active unit in the cluster. Note that the CGF VM's are deployed in their own subnet with no other resources. All protected subnets will be associated with a route table that points to the active CGF as the next hop IP address. Do not put the firewall subnet in a route table as this will cause routing loops.
 
@@ -27,7 +27,7 @@ Following resources will be created by the template:
 - Two route tables that will route all traffic for external and towards the other internal networks to the Barracuda CGF
 - One external Basic Azure Load Balancer containing the deployed virtual machines with a public IP and services for IPSEC and TINA VPN tunnels available
 - Two Barracuda CloudGen Firewall F virtual machines with 1 network interface each and public IP
-- Both CGF systems are deployed in an Availability Set
+- First CGF deployed in availability zone 1, second CGF in availability zone 2
 
 **Note** Other than the read and green subnets, the backend subnets and resources are not automatically created by the template. This has to be done manually after template deployment has finished.
 
