@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Barracuda CloudGen Firewall - HA Cluster with EIP shifting",
+    "Description": "Barracuda CloudGen Firewall - HA Cluster with EIP shifting and transit gateway",
     "Metadata": {
         "AWS::CloudFormation::Interface": {
             "ParameterGroups": [
@@ -19,7 +19,11 @@
                         "default": "Network Settings"
                     },
                     "Parameters": [
-                        "VpcAddress",
+                        "HubVpcAddress",
+                        "Spoke1VpcAddress",
+                        "Spoke1Subnet1Address",
+                        "Spoke2VpcAddress",
+                        "Spoke2Subnet1Address",
                         "CGF1MIP",
                         "CGF2MIP",
                         "Zone1",
@@ -58,7 +62,7 @@
         "InstanceType": {
             "Description": "Select the EC2 instance type, Recommended: c5, m5 or t3",
             "Type": "String",
-            "Default": "c5.large",
+            "Default": "t2.small",
             "AllowedValues": [
                 "t2.small",
                 "t2.medium",
@@ -102,7 +106,7 @@
         "EnableREST": {
             "Description": "Enable REST service on firewall by default",
             "Type": "String",
-            "Default": "No",
+            "Default": "Yes",
             "AllowedValues": [
                 "Yes",
                 "No"
@@ -111,7 +115,7 @@
         "IAMProfile": {
             "Description": "Select the IAM Role for the Firewall. Check Barracuda Campus (https://campus.barracuda.com/doc/73719778/) for more details",
             "Type": "String",
-            "Default": "NextGenFirewallRole"
+            "Default": "Collins_CGF_Role"
         },
         "CGF1MIP": {
             "Type": "String",
@@ -131,10 +135,38 @@
             "Type": "AWS::EC2::AvailabilityZone::Name",
             "Description": "Availability Zone for secondary firewall"
         },
-        "VpcAddress": {
-            "Description": "IP address space for new VPC",
+        "HubVpcAddress": {
+            "Description": "IP address space for new Hub VPC",
             "Type": "String",
             "Default": "192.168.0.0/16",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "Use valid CIDR notation"
+        },
+        "Spoke1VpcAddress": {
+            "Description": "IP address space for new spoke 1 VPC",
+            "Type": "String",
+            "Default": "10.1.0.0/16",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "Use valid CIDR notation"
+        },
+        "Spoke1Subnet1Address": {
+            "Description": "IP address space for first subnet in spoke 1 VPC",
+            "Type": "String",
+            "Default": "10.1.0.0/24",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "Use valid CIDR notation"
+        },
+        "Spoke2VpcAddress": {
+            "Description": "IP address space for new spoke 2 VPC",
+            "Type": "String",
+            "Default": "10.2.0.0/16",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "Use valid CIDR notation"
+        },
+        "Spoke2Subnet1Address": {
+            "Description": "IP address space for first subnet in spoke 2 VPC",
+            "Type": "String",
+            "Default": "10.2.0.0/24",
             "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
             "ConstraintDescription": "Use valid CIDR notation"
         }
@@ -314,11 +346,11 @@
         }
     },
     "Resources": {
-        "vpcCGF": {
+        "vpcHub": {
             "Type": "AWS::EC2::VPC",
             "Properties": {
                 "CidrBlock": {
-                    "Ref": "VpcAddress"
+                    "Ref": "HubVpcAddress"
                 },
                 "InstanceTenancy": "default",
                 "EnableDnsSupport": true,
@@ -333,7 +365,7 @@
                                     {
                                         "Ref": "Prefix"
                                     },
-                                    "-VPC"
+                                    "-HubVPC"
                                 ]
                             ]
                         }
@@ -347,7 +379,73 @@
                 ]
             }
         },
-        "subnetPublic1": {
+        "vpcSpoke1": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": {
+                    "Ref": "Spoke1VpcAddress"
+                },
+                "InstanceTenancy": "default",
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-Spoke1VPC"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "vpcSpoke2": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": {
+                    "Ref": "Spoke2VpcAddress"
+                },
+                "InstanceTenancy": "default",
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-Spoke2VPC"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "subnetHub1": {
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "AvailabilityZone": {
@@ -401,7 +499,7 @@
                     ]
                 },
                 "VpcId": {
-                    "Ref": "vpcCGF"
+                    "Ref": "vpcHub"
                 },
                 "Tags": [
                     {
@@ -427,7 +525,7 @@
                 ]
             }
         },
-        "subnetPublic2": {
+        "subnetHub2": {
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "AvailabilityZone": {
@@ -481,7 +579,7 @@
                     ]
                 },
                 "VpcId": {
-                    "Ref": "vpcCGF"
+                    "Ref": "vpcHub"
                 },
                 "Tags": [
                     {
@@ -494,6 +592,78 @@
                                         "Ref": "Prefix"
                                     },
                                     "-PublicSubnet2"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "subnet1Spoke1": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": {
+                    "Ref": "Zone1"
+                },
+                "CidrBlock": {
+                    "Ref": "Spoke1Subnet1Address"
+                },
+                "VpcId": {
+                    "Ref": "vpcSpoke1"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-Subnet1Spoke1"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "subnet1Spoke2": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": {
+                    "Ref": "Zone2"
+                },
+                "CidrBlock": {
+                    "Ref": "Spoke2Subnet1Address"
+                },
+                "VpcId": {
+                    "Ref": "vpcSpoke2"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-Subnet1Spoke2"
                                 ]
                             ]
                         }
@@ -538,18 +708,18 @@
             "Type": "AWS::EC2::VPCGatewayAttachment",
             "Properties": {
                 "VpcId": {
-                    "Ref": "vpcCGF"
+                    "Ref": "vpcHub"
                 },
                 "InternetGatewayId": {
                     "Ref": "igw"
                 }
             }
         },
-        "routeTablePublic": {
+        "routeTableHub": {
             "Type": "AWS::EC2::RouteTable",
             "Properties": {
                 "VpcId": {
-                    "Ref": "vpcCGF"
+                    "Ref": "vpcHub"
                 },
                 "Tags": [
                     {
@@ -561,7 +731,7 @@
                                     {
                                         "Ref": "Prefix"
                                     },
-                                    "-RouteTablePublic"
+                                    "-routeTableHub"
                                 ]
                             ]
                         }
@@ -580,7 +750,7 @@
             "DependsOn": "igwToInternet",
             "Properties": {
                 "RouteTableId": {
-                    "Ref": "routeTablePublic"
+                    "Ref": "routeTableHub"
                 },
                 "DestinationCidrBlock": "0.0.0.0/0",
                 "GatewayId": {
@@ -588,25 +758,25 @@
                 }
             }
         },
-        "routeTableToSubnetPublic1": {
+        "routeTableToSubnetHub1": {
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
                 "RouteTableId": {
-                    "Ref": "routeTablePublic"
+                    "Ref": "routeTableHub"
                 },
                 "SubnetId": {
-                    "Ref": "subnetPublic1"
+                    "Ref": "subnetHub1"
                 }
             }
         },
-        "routeTableToSubnetPublic2": {
+        "routeTableToSubnetHub2": {
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
                 "RouteTableId": {
-                    "Ref": "routeTablePublic"
+                    "Ref": "routeTableHub"
                 },
                 "SubnetId": {
-                    "Ref": "subnetPublic2"
+                    "Ref": "subnetHub2"
                 }
             }
         },
@@ -614,7 +784,7 @@
             "Type": "AWS::EC2::RouteTable",
             "Properties": {
                 "VpcId": {
-                    "Ref": "vpcCGF"
+                    "Ref": "vpcHub"
                 },
                 "Tags": [
                     {
@@ -652,12 +822,75 @@
                 }
             }
         },
+        "CGF2TgwCgw": {
+          "Type": "AWS::EC2::CustomerGateway",
+          "Properties": {
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                {
+                                    "Ref": "Prefix"
+                                },
+                                "-CGF-2-TGW-VPN"
+                            ]
+                        ]
+                    }
+                },
+                {
+                    "Key": "TemplateName",
+                    "Value": {
+                        "Ref": "Prefix"
+                    }
+                }
+            ],
+            "Type": "ipsec.1",
+            "IpAddress": {
+                "Ref": "floatingEIP"
+            },
+            "BgpAsn": "65000"
+          }
+        },
+        "TGW2CGFVPNConn": {
+          "Type": "AWS::EC2::VPNConnection",
+          "Properties": {
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                {
+                                    "Ref": "Prefix"
+                                },
+                                "-TGW2CGF"
+                            ]
+                        ]
+                    }
+                },
+                {
+                    "Key": "TemplateName",
+                    "Value": {
+                        "Ref": "Prefix"
+                    }
+                }
+            ],
+            "Type": "ipsec.1",
+            "CustomerGatewayId": {
+              "Ref": "CGF2TgwCgw"
+            }
+          }
+        },
         "securityGroupCGF": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "GroupDescription": "Allow All Traffic.",
                 "VpcId": {
-                    "Ref": "vpcCGF"
+                    "Ref": "vpcHub"
                 },
                 "SecurityGroupIngress": [
                     {
@@ -759,7 +992,7 @@
                         },
                         "DeviceIndex": "0",
                         "SubnetId": {
-                            "Ref": "subnetPublic1"
+                            "Ref": "subnetHub1"
                         },
                         "PrivateIpAddresses": [
                             {
@@ -1079,7 +1312,7 @@
                         },
                         "DeviceIndex": "0",
                         "SubnetId": {
-                            "Ref": "subnetPublic2"
+                            "Ref": "subnetHub2"
                         },
                         "PrivateIpAddresses": [
                             {
