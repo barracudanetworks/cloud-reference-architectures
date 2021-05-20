@@ -1,0 +1,1240 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Barracuda CloudGen WAF - HA Pair",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Instance Settings"
+                    },
+                    "Parameters": [
+                        "InstanceType",
+                        "LicenceMode",
+                        "ReleaseVersion"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Network Settings"
+                    },
+                    "Parameters": [
+                        "VpcAddress",
+                        "WAF1MIP",
+                        "WAF2MIP",
+                        "Zone1",
+                        "Zone2"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "InstanceType": {
+                    "default": "Instance Type"
+                },
+                "IAMProfile": {
+                    "default": "IAM Profile Name"
+                },
+                "WAF1MIP": {
+                    "default": "Primary Firewall IP"
+                },
+                "WAF2MIP": {
+                    "default": "Secondary Firewall IP"
+                },
+                "Zone1": {
+                    "default": "AZ for Primary WAF"
+                },
+                "Zone2": {
+                    "default": "AZ for Secondary WAF"
+                }
+            }
+        }
+    },
+    "Parameters": {
+        "Prefix": {
+            "Type": "String",
+            "Default": "WAFHA",
+            "Description": "Enter the prefix prepended to resources of this template"
+        },
+        "InstanceType": {
+            "Description": "Select the EC2 instance type, Recommended: c5, m5 or t3",
+            "Type": "String",
+            "Default": "c5.large",
+            "AllowedValues": [
+                "t2.small",
+                "t2.medium",
+                "t2.large",
+                "t3.small",
+                "t3.medium",
+                "t3.large",
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "m5.large",
+                "m5.xlarge",
+                "m5.2xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "c4.2xlarge",
+                "c5.large",
+                "c5.xlarge",
+                "c5.2xlarge"
+            ]
+        },
+        "LicenceMode": {
+            "Description": "Select the license type.",
+            "Type": "String",
+            "Default": "Hourly",
+            "AllowedValues": [
+                "Hourly",
+                "BYOL",
+                "Metered"
+            ]
+        },
+        "ReleaseVersion": {
+            "Description": "Which release do you want to deploy?",
+            "Type": "String",
+            "Default": "8.0.0",
+            "AllowedValues": [
+                "8.0.0",
+                "7.2.2"
+            ]
+        },
+        "EnableREST": {
+            "Description": "Enable REST service on firewall by default",
+            "Type": "String",
+            "Default": "No",
+            "AllowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "IAMProfile": {
+            "Description": "Select the IAM Role for the Firewall. Check Barracuda Campus (https://campus.barracuda.com/doc/73719778/) for more details",
+            "Type": "String",
+            "Default": "NextGenFirewallRole"
+        },
+        "WAF1MIP": {
+            "Type": "String",
+            "Default": "192.168.1.10",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})"
+        },
+        "WAF2MIP": {
+            "Type": "String",
+            "Default": "192.168.2.10",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})"
+        },
+        "Zone1": {
+            "Type": "AWS::EC2::AvailabilityZone::Name",
+            "Description": "Availability Zone for primary firewall"
+        },
+        "Zone2": {
+            "Type": "AWS::EC2::AvailabilityZone::Name",
+            "Description": "Availability Zone for secondary firewall"
+        },
+        "VpcAddress": {
+            "Description": "IP address space for new VPC",
+            "Type": "String",
+            "Default": "192.168.0.0/16",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "Use valid CIDR notation"
+        }
+    },
+    "Mappings": {
+        "amiMapMap": {
+            "7.2.2": {
+                "mapName": "amiMapv722"
+            },
+            "8.0.0": {
+                "mapName": "amiMapv800"
+            }
+        },
+        "amiMapv722": {
+            "ap-south-1": {
+                "Hourly": "ami-03c7fefc0f6196d1f",
+                "BYOL": "ami-004a941d35e76d1c3",
+                "Metered": "ami-00d03b7382e6e48b7"
+            },
+            "eu-west-3": {
+                "Hourly": "ami-0e5604bcd0bd30b73",
+                "BYOL": "ami-0a403b749fefd8d32",
+                "Metered": "ami-00188af8e0b673fa6"
+            },
+            "eu-west-2": {
+                "Hourly": "ami-0e7b10d0e5047c696",
+                "BYOL": "ami-0db9b61e5420d7e8f",
+                "Metered": "ami-00f38e7da117d5fa3"
+            },
+            "eu-west-1": {
+                "Hourly": "ami-04f99a618a3dca6fa",
+                "BYOL": "ami-0d91aaf7344ac3448",
+                "Metered": "ami-0e3561eacc51f6981"
+            },
+            "ap-northeast-2": {
+                "Hourly": "ami-0245959713fe9da62",
+                "BYOL": "ami-023f33ee67a4b714e",
+                "Metered": "ami-0e47c150c02d05d4c"
+            },
+            "ap-northeast-1": {
+                "Hourly": "ami-0be3432767d410bea",
+                "BYOL": "ami-06cb4c406b6a54e3d",
+                "Metered": "ami-0a92314980937dfb7"
+            },
+            "sa-east-1": {
+                "Hourly": "ami-0a599a8bc4ed4be14",
+                "BYOL": "ami-0716b5eea731dd18f",
+                "Metered": "ami-0a95e2e088fd98b9e"
+            },
+            "ca-central-1": {
+                "Hourly": "ami-05633c0a259a7b578",
+                "BYOL": "ami-02aea8d07ce3e18c5",
+                "Metered": "ami-0532c1c03ba4fea1c"
+            },
+            "ap-southeast-1": {
+                "Hourly": "ami-017a60433bd310059",
+                "BYOL": "ami-034f3aee396a6fee2",
+                "Metered": "ami-0a634e580bc30f62b"
+            },
+            "ap-southeast-2": {
+                "Hourly": "ami-041b2c8c1133b8f45",
+                "BYOL": "ami-05b9344d95079a317",
+                "Metered": "ami-01da023d3661647f4"
+            },
+            "eu-central-1": {
+                "Hourly": "ami-0c36d1410b29b149b",
+                "BYOL": "ami-0e40eeeff781cb1e9",
+                "Metered": "ami-0d98019c163e2ed4e"
+            },
+            "us-east-1": {
+                "Hourly": "ami-003163f417a45d0ab",
+                "BYOL": "ami-048d05819b43ea120",
+                "Metered": "ami-05210ee01708ca581"
+            },
+            "us-east-2": {
+                "Hourly": "ami-0ea524c8384cbd2ce",
+                "BYOL": "ami-0a8ba83843737c4ec",
+                "Metered": "ami-001fdebe1eb56c5df"
+            },
+            "us-west-1": {
+                "Hourly": "ami-007df950d347f2a2c",
+                "BYOL": "ami-015316cd1568230f5",
+                "Metered": "ami-023648de69017df75"
+            },
+            "us-west-2": {
+                "Hourly": "ami-09f1fcc07140a9605",
+                "BYOL": "ami-0a63c20752ee8289b",
+                "Metered": "ami-09cafca128eb8b3ff"
+            }
+        },
+        "amiMapv800": {
+            "ap-south-1": {
+                "Hourly": "ami-05d8947000efde91c",
+                "BYOL": "ami-0c549990baa53a1aa",
+                "Metered": "ami-0ffccdda4badd479d"
+            },
+            "eu-west-3": {
+                "Hourly": "ami-07b65515fb71b3ba0",
+                "BYOL": "ami-075b6bac76319938c",
+                "Metered": "ami-02fa9d680677e819c"
+            },
+            "eu-west-2": {
+                "Hourly": "ami-035b249f052aeb5fb",
+                "BYOL": "ami-0dd2d681e348cd17f",
+                "Metered": "ami-079f0175e689e5097"
+            },
+            "eu-west-1": {
+                "Hourly": "ami-0480b178cd4cb6f27",
+                "BYOL": "ami-06af86e5264e76613",
+                "Metered": "ami-02427823550cbf3f7"
+            },
+            "ap-northeast-2": {
+                "Hourly": "ami-044c938fd28b832a9",
+                "BYOL": "ami-0e27f9dd8e567acd3",
+                "Metered": "ami-0059de278303bc9c4"
+            },
+            "ap-northeast-1": {
+                "Hourly": "ami-0e60d5291d76cf237",
+                "BYOL": "ami-00a7813f5bf439194",
+                "Metered": "ami-0092d8c4c9347a1d7"
+            },
+            "sa-east-1": {
+                "Hourly": "ami-08968a20554149211",
+                "BYOL": "ami-04319c0d9fb25cc54",
+                "Metered": "ami-0b2182bcc3a705fdf"
+            },
+            "ca-central-1": {
+                "Hourly": "ami-0e2e42f2cb5ece765",
+                "BYOL": "ami-07afa625c7ee674d6",
+                "Metered": "ami-0dd0c59294237d3e9"
+            },
+            "ap-southeast-1": {
+                "Hourly": "ami-0a3789acb5bbc33be",
+                "BYOL": "ami-053712db52a534703",
+                "Metered": "ami-05fe67b795f42f893"
+            },
+            "ap-southeast-2": {
+                "Hourly": "ami-0f27e75ee3c9255fb",
+                "BYOL": "ami-0645c60607cf66026",
+                "Metered": "ami-06c5d534c177581c6"
+            },
+            "eu-central-1": {
+                "Hourly": "ami-049e4cc80b4d34754",
+                "BYOL": "ami-0e5e37c8b6fa8a1ba",
+                "Metered": "ami-0fbe71e180243be6a"
+            },
+            "us-east-1": {
+                "Hourly": "ami-091a6c8700573fd21",
+                "BYOL": "ami-0c61a49ad4a308b8e",
+                "Metered": "ami-04abfcd4c2a6d535d"
+            },
+            "us-east-2": {
+                "Hourly": "ami-0b97b7ca6d22e4379",
+                "BYOL": "ami-018ec098aec3c51b7",
+                "Metered": "ami-05a9199138582ef3f"
+            },
+            "us-west-1": {
+                "Hourly": "ami-0039240363fe4342d",
+                "BYOL": "ami-04d226c6d3e3f36d2",
+                "Metered": "ami-0d176d42c7ed1e2d1"
+            },
+            "us-west-2": {
+                "Hourly": "ami-0621f5e9cc28ab030",
+                "BYOL": "ami-0a213fa7b12a5b774",
+                "Metered": "ami-08a338c2a821d1f3c"
+            }
+        }
+    },
+    "Conditions": {
+        "EnableRESTCondition": {
+            "Fn::Equals": [
+                {
+                    "Ref": "EnableREST"
+                },
+                "Yes"
+            ]
+        }
+    },
+    "Resources": {
+        "vpcWAF": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": {
+                    "Ref": "VpcAddress"
+                },
+                "InstanceTenancy": "default",
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-VPC"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "subnetPublic1": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": {
+                    "Ref": "Zone1"
+                },
+                "CidrBlock": {
+                    "Fn::Join": [
+                        ".",
+                        [
+                            {
+                                "Fn::Select": [
+                                    0,
+                                    {
+                                        "Fn::Split": [
+                                            ".",
+                                            {
+                                                "Ref": "WAF1MIP"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "Fn::Select": [
+                                    1,
+                                    {
+                                        "Fn::Split": [
+                                            ".",
+                                            {
+                                                "Ref": "WAF1MIP"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "Fn::Select": [
+                                    2,
+                                    {
+                                        "Fn::Split": [
+                                            ".",
+                                            {
+                                                "Ref": "WAF1MIP"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "0/24"
+                        ]
+                    ]
+                },
+                "VpcId": {
+                    "Ref": "vpcWAF"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-PublicSubnet1"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "subnetPublic2": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": {
+                    "Ref": "Zone2"
+                },
+                "CidrBlock": {
+                    "Fn::Join": [
+                        ".",
+                        [
+                            {
+                                "Fn::Select": [
+                                    0,
+                                    {
+                                        "Fn::Split": [
+                                            ".",
+                                            {
+                                                "Ref": "WAF2MIP"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "Fn::Select": [
+                                    1,
+                                    {
+                                        "Fn::Split": [
+                                            ".",
+                                            {
+                                                "Ref": "WAF2MIP"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "Fn::Select": [
+                                    2,
+                                    {
+                                        "Fn::Split": [
+                                            ".",
+                                            {
+                                                "Ref": "WAF2MIP"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "0/24"
+                        ]
+                    ]
+                },
+                "VpcId": {
+                    "Ref": "vpcWAF"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-PublicSubnet2"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "igw": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-IGW"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "igwToInternet": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "vpcWAF"
+                },
+                "InternetGatewayId": {
+                    "Ref": "igw"
+                }
+            }
+        },
+        "routeTablePublic": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "vpcWAF"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-RouteTablePublic"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "PublicRoute": {
+            "Type": "AWS::EC2::Route",
+            "DependsOn": "igwToInternet",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "routeTablePublic"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "igw"
+                }
+            }
+        },
+        "routeTableToSubnetPublic1": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "routeTablePublic"
+                },
+                "SubnetId": {
+                    "Ref": "subnetPublic1"
+                }
+            }
+        },
+        "routeTableToSubnetPublic2": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "routeTablePublic"
+                },
+                "SubnetId": {
+                    "Ref": "subnetPublic2"
+                }
+            }
+        },
+        "routeTablePrivate": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "vpcWAF"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-RouteTablePrivate"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "PrivateRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "routeTablePrivate"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "InstanceId": {
+                    "Ref": "instanceWAF1"
+                }
+            }
+        },
+        "securityGroupWAF": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Allow All Traffic.",
+                "VpcId": {
+                    "Ref": "vpcWAF"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": -1,
+                        "ToPort": -1,
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-SecurityGroup"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ]
+            }
+        },
+        "floatingEIP": {
+            "Type": "AWS::EC2::EIP",
+            "Properties": {
+                "Domain": "vpc"
+            }
+        },
+        "floatingEIPAssoc": {
+            "Type": "AWS::EC2::EIPAssociation",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::GetAtt": [
+                        "floatingEIP",
+                        "AllocationId"
+                    ]
+                },
+                "InstanceId": {
+                    "Ref": "instanceWAF1"
+                }
+            }
+        },
+        "instanceWAF1": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "DisableApiTermination": false,
+                "InstanceInitiatedShutdownBehavior": "stop",
+                "IamInstanceProfile": {
+                    "Ref": "IAMProfile"
+                },
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        {
+                            "Fn::FindInMap": [
+                                "amiMapMap",
+                                {
+                                    "Ref": "ReleaseVersion"
+                                },
+                                "mapName"
+                            ]
+                        },
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        {
+                            "Ref": "LicenceMode"
+                        }
+                    ]
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "Monitoring": false,
+                "SourceDestCheck": false,
+                "NetworkInterfaces": [
+                    {
+                        "DeleteOnTermination": true,
+                        "Description": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    "NIC WAF1 ",
+                                    {
+                                        "Ref": "Prefix"
+                                    }
+                                ]
+                            ]
+                        },
+                        "DeviceIndex": "0",
+                        "SubnetId": {
+                            "Ref": "subnetPublic1"
+                        },
+                        "PrivateIpAddresses": [
+                            {
+                                "PrivateIpAddress": {
+                                    "Ref": "WAF1MIP"
+                                },
+                                "Primary": true
+                            }
+                        ],
+                        "GroupSet": [
+                            {
+                                "Ref": "securityGroupWAF"
+                            }
+                        ],
+                        "AssociatePublicIpAddress": true
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-WAF1"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+                                "#!/bin/bash",
+                                {
+                                    "Fn::If": [
+                                        "EnableRESTCondition",
+                                        "/opt/phion/bin/cloud-enable-rest",
+                                        ""
+                                    ]
+                                },
+                                {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "/opt/aws/bin/cfn-init -v ",
+                                            "         --stack ",
+                                            {
+                                                "Ref": "AWS::StackName"
+                                            },
+                                            "         --resource instanceWAF1 ",
+                                            "         --region ",
+                                            {
+                                                "Ref": "AWS::Region"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "/opt/phion/bin/cloud-setmip",
+                                            {
+                                                "Ref": "WAF1MIP"
+                                            },
+                                            "24",
+                                            {
+                                                "Fn::Join": [
+                                                    ".",
+                                                    [
+                                                        {
+                                                            "Fn::Select": [
+                                                                0,
+                                                                {
+                                                                    "Fn::Split": [
+                                                                        ".",
+                                                                        {
+                                                                            "Ref": "WAF1MIP"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "Fn::Select": [
+                                                                1,
+                                                                {
+                                                                    "Fn::Split": [
+                                                                        ".",
+                                                                        {
+                                                                            "Ref": "WAF1MIP"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "Fn::Select": [
+                                                                2,
+                                                                {
+                                                                    "Fn::Split": [
+                                                                        ".",
+                                                                        {
+                                                                            "Ref": "WAF1MIP"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        "1"
+                                                    ]
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                },
+                                {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "echo",
+                                            {
+                                                "Ref": "instanceWAF2"
+                                            },
+                                            "|/opt/phion/bin/create-dha -s S1 -c -o",
+                                            {
+                                                "Ref": "WAF2MIP"
+                                            },
+                                            "-n",
+                                            "24",
+                                            "-g",
+                                            {
+                                                "Fn::Join": [
+                                                    ".",
+                                                    [
+                                                        {
+                                                            "Fn::Select": [
+                                                                0,
+                                                                {
+                                                                    "Fn::Split": [
+                                                                        ".",
+                                                                        {
+                                                                            "Ref": "WAF2MIP"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "Fn::Select": [
+                                                                1,
+                                                                {
+                                                                    "Fn::Split": [
+                                                                        ".",
+                                                                        {
+                                                                            "Ref": "WAF2MIP"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "Fn::Select": [
+                                                                2,
+                                                                {
+                                                                    "Fn::Split": [
+                                                                        ".",
+                                                                        {
+                                                                            "Ref": "WAF2MIP"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        "1"
+                                                    ]
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "cat << EOF >> /opt/phion/hooks/ha/aws-shift-eip.sh",
+                                ". /etc/phion/bin/cloud-logapi.sh",
+                                "init_log box_Cloud_control aws-eip-shift",
+                                "ilog \"hook script called with \\$1\"",
+                                "EOF",
+                                "echo \"[[ \\\"_\\$1\\\" == \\\"_HA-START\\\" ]] && {\" >> /opt/phion/hooks/ha/aws-shift-eip.sh",
+                                {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "echo \"/opt/aws/bin/aws ec2 associate-address",
+                                            "--instance-id $(/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id)",
+                                            "--allocation-id ",
+                                            {
+                                                "Fn::GetAtt": [
+                                                    "floatingEIP",
+                                                    "AllocationId"
+                                                ]
+                                            },
+                                            "--allow-reassociation\"",
+                                            ">> /opt/phion/hooks/ha/aws-shift-eip.sh"
+                                        ]
+                                    ]
+                                },
+                                "echo \"ilog \\\"EIP shifting to primary initiated: \\${aws_handle}\\\"\" >> /opt/phion/hooks/ha/aws-shift-eip.sh",
+                                "echo \"}\" >> /opt/phion/hooks/ha/aws-shift-eip.sh",
+                                "chmod +x /opt/phion/hooks/ha/aws-shift-eip.sh",
+                                "cat << EOF >> /opt/phion/bin/xcloud-aws-check-eip-assoc.sh",
+                                "if [[ \\$(head -1 /opt/phion/run/server.ctrl | cut -d \" \" -f 3) =~ ^(primary|secondary)\\$ ]]; then",
+                                "MY_ID=\\`/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id\\`",
+                                "MY_IP=\\`/opt/aws/bin/aws ec2 describe-instances --instance-id \\$MY_ID --output text | grep ASSOC | head -1 | cut -d \\$'\t' -f 4\\`",
+                                "CLUSTER_CNT=\\`phionctrl server show | grep Boxes | xargs | tr \" \" \"\\n\" | grep -v Boxes | wc -l\\`",
+                                "if [ \"_\\$1\" != \"_\\$MY_IP\" ] && [ \\$CLUSTER_CNT == \"2\" ]; then",
+                                "/opt/phion/hooks/ha/aws-shift-eip.sh HA-START",
+                                "fi",
+                                "fi",
+                                "EOF",
+                                "chmod +x /opt/phion/bin/xcloud-aws-check-eip-assoc.sh",
+                                {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "echo \"* * * * * root /opt/phion/bin/xcloud-aws-check-eip-assoc.sh",
+                                            {
+                                                "Ref": "floatingEIP"
+                                            },
+                                            "\" > /etc/cron.d/aws-check-eip-assoc"
+                                        ]
+                                    ]
+                                },
+                                {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "/opt/aws/bin/cfn-signal -e $? ",
+                                            "         --stack ",
+                                            {
+                                                "Ref": "AWS::StackName"
+                                            },
+                                            "         --resource instanceWAF1 ",
+                                            "         --region ",
+                                            {
+                                                "Ref": "AWS::Region"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT15M"
+                }
+            }
+        },
+        "instanceWAF2": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "DisableApiTermination": false,
+                "InstanceInitiatedShutdownBehavior": "stop",
+                "IamInstanceProfile": {
+                    "Ref": "IAMProfile"
+                },
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        {
+                            "Fn::FindInMap": [
+                                "amiMapMap",
+                                {
+                                    "Ref": "ReleaseVersion"
+                                },
+                                "mapName"
+                            ]
+                        },
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        {
+                            "Ref": "LicenceMode"
+                        }
+                    ]
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "Monitoring": false,
+                "SourceDestCheck": false,
+                "NetworkInterfaces": [
+                    {
+                        "DeleteOnTermination": true,
+                        "Description": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    "NIC WAF2 ",
+                                    {
+                                        "Ref": "Prefix"
+                                    }
+                                ]
+                            ]
+                        },
+                        "DeviceIndex": "0",
+                        "SubnetId": {
+                            "Ref": "subnetPublic2"
+                        },
+                        "PrivateIpAddresses": [
+                            {
+                                "PrivateIpAddress": {
+                                    "Ref": "WAF2MIP"
+                                },
+                                "Primary": true
+                            }
+                        ],
+                        "GroupSet": [
+                            {
+                                "Ref": "securityGroupWAF"
+                            }
+                        ],
+                        "AssociatePublicIpAddress": true
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Prefix"
+                                    },
+                                    "-WAF2"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "TemplateName",
+                        "Value": {
+                            "Ref": "Prefix"
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+                                "#!/bin/bash",
+                                {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "/opt/aws/bin/cfn-init -v ",
+                                            "         --stack ",
+                                            {
+                                                "Ref": "AWS::StackName"
+                                            },
+                                            "         --resource instanceWAF2 ",
+                                            "         --region ",
+                                            {
+                                                "Ref": "AWS::Region"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "/opt/phion/bin/editconf -f /opt/phion/config/active/boxadm.conf -p RPASSWDENFORCE -v 0",
+                                "/opt/phion/bin/editconf -f /opt/phion/config/configroot/boxadm.conf -p RPASSWDENFORCE -v 0",
+                                "cat << EOF >> /opt/phion/hooks/ha/aws-shift-eip.sh",
+                                ". /etc/phion/bin/cloud-logapi.sh",
+                                "init_log box_Cloud_control aws-eip-shift",
+                                "ilog \"hook script called with \\$1\"",
+                                "EOF",
+                                "echo \"[[ \\\"_\\$1\\\" == \\\"_HA-START\\\" ]] && {\" >> /opt/phion/hooks/ha/aws-shift-eip.sh",
+                                {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "echo \"/opt/aws/bin/aws ec2 associate-address",
+                                            "--instance-id $(/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id)",
+                                            "--allocation-id ",
+                                            {
+                                                "Fn::GetAtt": [
+                                                    "floatingEIP",
+                                                    "AllocationId"
+                                                ]
+                                            },
+                                            "--allow-reassociation\"",
+                                            ">> /opt/phion/hooks/ha/aws-shift-eip.sh"
+                                        ]
+                                    ]
+                                },
+                                "echo \"ilog \\\"EIP shifting to secondary initiated: \\${aws_handle}\\\"\" >> /opt/phion/hooks/ha/aws-shift-eip.sh",
+                                "echo \"}\" >> /opt/phion/hooks/ha/aws-shift-eip.sh",
+                                "chmod +x /opt/phion/hooks/ha/aws-shift-eip.sh",
+                                "cat << EOF >> /opt/phion/bin/xcloud-aws-check-eip-assoc.sh",
+                                "if [[ \\$(head -1 /opt/phion/run/server.ctrl | cut -d \" \" -f 3) =~ ^(primary|secondary)\\$ ]]; then",
+                                "MY_ID=\\`/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id\\`",
+                                "MY_IP=\\`/opt/aws/bin/aws ec2 describe-instances --instance-id \\$MY_ID --output text | grep ASSOC | head -1 | cut -d \\$'\t' -f 4\\`",
+                                "CLUSTER_CNT=\\`phionctrl server show | grep Boxes | xargs | tr \" \" \"\\n\" | grep -v Boxes | wc -l\\`",
+                                "if [ \"_\\$1\" != \"_\\$MY_IP\" ] && [ \\$CLUSTER_CNT == \"2\" ]; then",
+                                "/opt/phion/hooks/ha/aws-shift-eip.sh HA-START",
+                                "fi",
+                                "fi",
+                                "EOF",
+                                "chmod +x /opt/phion/bin/xcloud-aws-check-eip-assoc.sh",
+                                {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "echo \"* * * * * root /opt/phion/bin/xcloud-aws-check-eip-assoc.sh",
+                                            {
+                                                "Ref": "floatingEIP"
+                                            },
+                                            "\" > /etc/cron.d/aws-check-eip-assoc"
+                                        ]
+                                    ]
+                                },
+                                {
+                                    "Fn::Join": [
+                                        " ",
+                                        [
+                                            "/opt/aws/bin/cfn-signal -e $? ",
+                                            "         --stack ",
+                                            {
+                                                "Ref": "AWS::StackName"
+                                            },
+                                            "         --resource instanceWAF2 ",
+                                            "         --region ",
+                                            {
+                                                "Ref": "AWS::Region"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT15M"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "WAFPublicIP": {
+            "Description": "Public IP address of the active firewall",
+            "Value": {
+                "Ref": "floatingEIP"
+            }
+        },
+        "InitialPassword": {
+            "Description": "Initial password for firewall management",
+            "Value": {
+                "Ref": "instanceWAF1"
+            }
+        }
+    }
+}
