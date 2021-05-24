@@ -132,7 +132,6 @@
             "ConstraintDescription": "Use valid CIDR notation"
         }
     },
-    "Mappings": {
         "Mappings": {
             "amiMapMap": {
               "10.1.1.016": {
@@ -1135,8 +1134,7 @@
                 "PAYG": "ami-0b0f9f6b"
               }
             }
-          }
-            },
+          },
     "Conditions": {
         "EnableRESTCondition": {
             "Fn::Equals": [
