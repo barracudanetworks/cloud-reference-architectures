@@ -1,0 +1,1437 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Barracuda CloudGen WAF - SA (single unit)",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Instance Settings"
+                    },
+                    "Parameters": [
+                        "InstanceType",
+                        "LicenceMode",
+                        "ReleaseVersion"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Network Settings"
+                    },
+                    "Parameters": [
+                        "VpcCIDR",
+                        "SubnetCIDR",
+                        "subnetAZ",
+                        "secGroupSrcCIDR"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "VpcCIDR": {"default": "VPC CIDR:"},
+                "subNetCIDR": {"default": "Subnet CIDR:"},
+                "InstanceType": {
+                    "default": "WAF Instance Type"
+                },
+                "subnetAZ": {
+                  "default": "AZ for WAF"
+                }
+            }
+        }
+    },
+    "Parameters": {
+        "Prefix": {
+            "Type": "String",
+            "Default": "WAFSA",
+            "Description": "Enter the prefix prepended to resources of this template"
+        },
+        "InstanceType": {
+            "Description": "Select the EC2 instance type, Recommended: c4/c5 or m4/m5",
+            "Type": "String",
+            "Default": "m4.large",
+            "AllowedValues": [
+                "m3.medium",
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "m5.large",
+                "m5.xlarge",
+                "m5.2xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "c4.2xlarge",
+                "c5.large",
+                "c5.xlarge",
+                "c5.2xlarge"
+            ]
+        },
+        "LicenceMode": {
+            "Description": "Select the license type.",
+            "Type": "String",
+            "Default": "BYOL",
+            "AllowedValues": [
+                "Hourly",
+                "BYOL",
+                "Metered"
+            ]
+        },
+        "ReleaseVersion": {
+            "Description": "Which WAF version do you want to deploy?",
+            "Type": "String",
+            "Default": "10.1.1.016",
+            "AllowedValues": [
+                "10.1.1.016",
+                "10.1.0.015",
+                "10.0.1.011",
+                "10.0.1.010",
+                "9.2.1.015",
+                "9.2.0.020",
+                "9.1.1.016",
+                "9.1.1.015",
+                "9.1.0.015",
+                "9.0.1.007"
+            ]
+        },
+        "secGroupSrcCIDR": {
+          "Description": "Src IP CIDR for inbound security group for ports 8000/8443/80/443/8080",
+          "Type": "String",
+          "MinLength": "9",
+          "MaxLength": "18",
+          "Default": "0.0.0.0/0",
+          "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+          "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x."
+        },
+        "VpcCIDR": {
+          "Description": "Subnet for the new VPC ( *** must not conflict with existing subnets *** ) ",
+          "Type": "String",
+          "Default": "10.0.0.0/16",
+          "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+          "ConstraintDescription": "Use valid CIDR notation"
+        },
+        "subNetCIDR": {
+          "Description": "Private subnet within the VPC address space. ",
+          "Type": "String",
+          "Default": "10.0.1.0/24",
+          "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+        },
+        "subnetAZ": {
+          "Type": "AWS::EC2::AvailabilityZone::Name",
+          "Description": "Availability Zone for WAF subnet"
+        }
+      },
+        "Mappings": {
+            "amiMapMap": {
+                "10.1.1.016": {
+                  "mapName": "10x1x1x016"
+                },
+                "10.1.0.015": {
+                  "mapName": "10x1x0x015"
+                },
+                "10.0.1.011": {
+                  "mapName": "10x0x1x011"
+                },
+                "10.0.1.010": {
+                  "mapName": "10x0x1x010"
+                },
+                "10.0.0.020": {
+                  "mapName": "10x0x0x020"
+                },
+                "9.2.1.015": {
+                  "mapName": "9x2x1x015"
+                },
+                "9.2.0.020": {
+                  "mapName": "9x2x0x020"
+                },
+                "9.1.1.016": {
+                  "mapName": "9x1x1x016"
+                },
+                "9.1.1.015": {
+                  "mapName": "9x1x1x015"
+                },
+                "9.1.0.015": {
+                  "mapName": "9x1x0x015"
+                },
+                "9.1.0.003": {
+                  "mapName": "9x1x0x003"
+                },
+                "9.0.1.007": {
+                  "mapName": "9x0x1x007"
+                },
+                "8.1.1.019": {
+                  "mapName": "8x1x1x019"
+                }
+              },
+              "10x1x1x016": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-0077e528ae43498f5",
+                  "METERED": "ami-0352b328eec44f914",
+                  "PAYG": "ami-0843e2a08adf5a2bb"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-00e2b2ae61dce213f",
+                  "METERED": "ami-019438a12a9f2ee86",
+                  "PAYG": "ami-0afbe401dbdb9a282"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-09fb42d83e8bb92b5",
+                  "METERED": "ami-04537339d7a1fe6db",
+                  "PAYG": "ami-049ddfff171e18266"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-07937237ea147620a",
+                  "METERED": "ami-08920d623e7584a5c",
+                  "PAYG": "ami-0e746d3a5b665a6fb"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-08ab64d96c4c3d97d",
+                  "METERED": "ami-0da24d462aa3e5d22",
+                  "PAYG": "ami-00ae25082320f2b00"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-017cb89c18dc19aab",
+                  "METERED": "ami-00782aecc29f9c8dc",
+                  "PAYG": "ami-01cba513c0e5efe2b"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-081825f8e52130748",
+                  "METERED": "ami-017311e96da89cc6e",
+                  "PAYG": "ami-0dcdd8046df8e35bf"
+                },
+                "eu-north-1": {
+                  "BYOL": "ami-0ae80231e0a70f4b9",
+                  "PAYG": "ami-0d743518c57557a7f"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-08646fe841b64d6ce",
+                  "METERED": "ami-013c459d411c3d969",
+                  "PAYG": "ami-0c2ee20b4d2005675"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-01e69c4baf54bc744",
+                  "METERED": "ami-09fdea2f58413d495",
+                  "PAYG": "ami-024254e7df69f666c"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-0944be87ea4cbcd2d",
+                  "METERED": "ami-0cd1428946579a2f7",
+                  "PAYG": "ami-0596e2065cd63c027"
+                },
+                "me-south-1": {
+                  "BYOL": "ami-0ca39cb4274ad4587"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-08604eae176b674f3",
+                  "METERED": "ami-027c98a50a0a8d164",
+                  "PAYG": "ami-05b3d0dfa89c7dec6"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-034543d76ef7650a8",
+                  "METERED": "ami-0f3692d0a14083573",
+                  "PAYG": "ami-02ba799fdb5fda694"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-0225a73ef8088e3ee",
+                  "METERED": "ami-0c7817429f52c4318",
+                  "PAYG": "ami-063bad96bd053da6e"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-05a27e61529c3671a",
+                  "METERED": "ami-0d61eb7b9d76d8c6d",
+                  "PAYG": "ami-0a9b9407fc6bb2a73"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-00940bc5f7caf92b8",
+                  "METERED": "ami-02d748c393f0bc3e9",
+                  "PAYG": "ami-07a03990a907dea03"
+                }
+              },
+              "10x1x0x015": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-0c440bb70463c761c",
+                  "METERED": "ami-01ac9145b06a8ca91",
+                  "PAYG": "ami-0e01a67faebc272c2"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-0fc188bfd3429df25",
+                  "METERED": "ami-0f50539620653f2b5",
+                  "PAYG": "ami-086f94398decf5ede"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-08d58b5894bd05173",
+                  "METERED": "ami-08b102d47db0c69b3",
+                  "PAYG": "ami-084dd46be15f52c7d"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-074e2025720bda866",
+                  "METERED": "ami-052775c45e327d3a6",
+                  "PAYG": "ami-0fcd599e26bba5ee6"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-09bd5532ecea3fe7c",
+                  "METERED": "ami-0b919c02b9cd37cf4",
+                  "PAYG": "ami-00ac1459606977d3b"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-076719552aa41f103",
+                  "METERED": "ami-03384425282bd5daf",
+                  "PAYG": "ami-098ddbd119645a022"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-0ade308f991ae12c5",
+                  "METERED": "ami-0093865d3f515e58a",
+                  "PAYG": "ami-02b16240bbaf7e9ab"
+                },
+                "eu-north-1": {
+                  "BYOL": "ami-0ad707859b70bf935",
+                  "PAYG": "ami-0c67a2a198498ae24"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-022697067ec037c34",
+                  "METERED": "ami-08f48cc17f532f599",
+                  "PAYG": "ami-0f1c912335d707bcb"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-070e4e1605b15ba79",
+                  "METERED": "ami-0065c1358c36cc506",
+                  "PAYG": "ami-0725638dde6875652"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-042f4fed8caa68302",
+                  "METERED": "ami-03eaf7c384d5895c7",
+                  "PAYG": "ami-09177bcbe0b7106b8"
+                },
+                "me-south-1": {
+                  "BYOL": "ami-095daf47dcd16eb59"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-0e178464bbb7a530d",
+                  "METERED": "ami-0a181e998e03e1dac",
+                  "PAYG": "ami-0cc8a83a11c87669f"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-0aebcd34f6295e8ae",
+                  "METERED": "ami-0c79ee28cced0bf07",
+                  "PAYG": "ami-05a33eb12b776c506"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-09518256f9e5b428e",
+                  "METERED": "ami-0076eb63fd9d42bba",
+                  "PAYG": "ami-045e816b1e02b7fef"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-0956095ed3768cc50",
+                  "METERED": "ami-02bd87b1778856383",
+                  "PAYG": "ami-0892ee615afca4c0b"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-0e8b1bc95320692d6",
+                  "METERED": "ami-00448b014f878be73",
+                  "PAYG": "ami-0fcb0e67ba0ebe5dc"
+                }
+              },
+              "10x0x1x011": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-040482863065d9111",
+                  "METERED": "ami-028d2db17aa683910",
+                  "PAYG": "ami-0e2e67ac366b76edc"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-0121574171fcb226a",
+                  "METERED": "ami-003f772bfa038a4a4",
+                  "PAYG": "ami-0e31d318ca53b9606"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-0e458de57cabe8f84",
+                  "METERED": "ami-0dbe0a9b6a16ebfca",
+                  "PAYG": "ami-04b0173b72c488797"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-0b7e14f3f77f1f55b",
+                  "METERED": "ami-0c43a5d62ea18c7c8",
+                  "PAYG": "ami-056d96b6cbc05cc33"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-01dcf361a2d252a63",
+                  "METERED": "ami-09c70deb8f777beab",
+                  "PAYG": "ami-04bcf69b27eccaa0f"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-0bbc0d3b5501bb030",
+                  "METERED": "ami-011d9b6305780a675",
+                  "PAYG": "ami-0e33e56db16768b34"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-02c48ef8defdf0379",
+                  "METERED": "ami-06b2d82ddc7d1331d",
+                  "PAYG": "ami-0855a190632e5689a"
+                },
+                "eu-north-1": {
+                  "BYOL": "ami-01095d5a323992ed2",
+                  "PAYG": "ami-0abf6e0a6fc5506a1"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-0bdc3bc93d8d4d6e2",
+                  "METERED": "ami-04f3eae290bac1f14",
+                  "PAYG": "ami-0b9c961d8742c3355"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-0262b6949aa7f1529",
+                  "METERED": "ami-0474a00f4be61493e",
+                  "PAYG": "ami-072b6a28fbe54dec4"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-01248c9fe2ba7c804",
+                  "METERED": "ami-09ac48bd5dbac09ce",
+                  "PAYG": "ami-04680cdbbd744cad3"
+                },
+                "me-south-1": {
+                  "BYOL": "ami-008c3f7ecb289ef86"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-0d589d10080d50f15",
+                  "METERED": "ami-0a302576ec093f5ba",
+                  "PAYG": "ami-0814167d27e0a2563"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-03fe3d14505dfefdc",
+                  "METERED": "ami-032446e301a3302e1",
+                  "PAYG": "ami-0913866e069422b08"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-0db89527496f6a87c",
+                  "METERED": "ami-0cde76cf8e6576fab",
+                  "PAYG": "ami-08b9597e03edad5f9"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-0905e9dc8bb4b91c3",
+                  "METERED": "ami-02891d18ed275dd05",
+                  "PAYG": "ami-0ef9b434f82422dda"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-070c2823862ff8ea8",
+                  "METERED": "ami-0edd4addf35051c36",
+                  "PAYG": "ami-02ef020b32e53c12c"
+                }
+              },
+              "10x0x1x010": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-039a286d83f298c77",
+                  "METERED": "ami-0e691094022c9027d",
+                  "PAYG": "ami-0b68ffd15be888856"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-05a38778beeceb365",
+                  "METERED": "ami-0525abb95ccb48318",
+                  "PAYG": "ami-06fd213c3898137c7"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-0a6c16f140aac3f85",
+                  "METERED": "ami-0feb68a3f9b8385d8",
+                  "PAYG": "ami-00f19395fed78d678"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-01e960c751122d7da",
+                  "METERED": "ami-02b922b76e6c38734",
+                  "PAYG": "ami-04bb3d5001759b25c"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-02f7ca75f189ed876",
+                  "METERED": "ami-00bb1db7b530d7f6c",
+                  "PAYG": "ami-03e9c33d6efa03155"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-0746775db51110aac",
+                  "METERED": "ami-0d15b9110c41349a6",
+                  "PAYG": "ami-096f27d50c427eabd"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-08913071311085a6b",
+                  "METERED": "ami-085df6bd5a76ad707",
+                  "PAYG": "ami-04da94b88d7fba217"
+                },
+                "eu-north-1": {
+                  "BYOL": "ami-0464703f7759505c0",
+                  "PAYG": "ami-0916d4f188d71dc24"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-06e59f6ad72a7cd1c",
+                  "METERED": "ami-08ab3e6a407bca30e",
+                  "PAYG": "ami-0a1e8b01fc68b2b13"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-0734efec526cdf542",
+                  "METERED": "ami-027ed1788ba4c39f3",
+                  "PAYG": "ami-0cac2304e1610e9ac"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-0e71a8d0831afa5ee",
+                  "METERED": "ami-0459be70f9c5d6fd7",
+                  "PAYG": "ami-0f49a410a5bd5eddd"
+                },
+                "me-south-1": {
+                  "BYOL": "ami-0cec512ec58af6a36"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-002d117923aa2db0e",
+                  "METERED": "ami-0fe80182852c1f53c",
+                  "PAYG": "ami-04cafe2d6f8d58991"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-0bd6bd3809f62b272",
+                  "METERED": "ami-03335e2e65ebf0d0b",
+                  "PAYG": "ami-0a472be037b03360a"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-031bd6c692aaa6de4",
+                  "METERED": "ami-0d605abe818e88da0",
+                  "PAYG": "ami-047210c64b26ffae9"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-0cc5d23b1e4bf061d",
+                  "METERED": "ami-0a4734c23dc3cf036",
+                  "PAYG": "ami-0a14bd9fd41471bd2"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-0f994059d35a5786c",
+                  "METERED": "ami-0f8de734aea40803b",
+                  "PAYG": "ami-040e6ac5de95107c1"
+                }
+              },
+              "10x0x0x020": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-0c6f81fe8b471f230",
+                  "PAYG": "ami-040a95c9d83d87fb6"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-07f90b6a8dcfd5c46",
+                  "PAYG": "ami-0127bfcbc160136e5"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-068710bf4ce2cdb12",
+                  "PAYG": "ami-02ee1508a7fe73e96"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-0dbcc8ce38ae403be",
+                  "PAYG": "ami-000bb47910beaf87b"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-038fd6f569b5a545a",
+                  "PAYG": "ami-02fcdeb5af90ea703"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-0203bad5bb69a6114",
+                  "PAYG": "ami-00503df9b84da734f"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-0de3f3b264056aa7d",
+                  "PAYG": "ami-0a817a951cf23f89e"
+                },
+                "eu-north-1": {
+                  "BYOL": "ami-71c64c0f",
+                  "PAYG": "ami-44c04a3a"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-0815afd68cc400ecc",
+                  "PAYG": "ami-0c100116db0b908b6"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-0679a9369d9e38302",
+                  "PAYG": "ami-074d9e6060c2c1f84"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-07b272a0e67b42c38",
+                  "PAYG": "ami-089abbac243bfecf9"
+                },
+                "me-south-1": {
+                  "BYOL": "ami-028db56c05f467285"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-07e1326b3820e6c31",
+                  "PAYG": "ami-0a60b104ddffeeb52"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-0dade5218e562d1a9",
+                  "PAYG": "ami-0ae96682c04853062"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-0a908ffc3747a0f79",
+                  "PAYG": "ami-08b153e93729d7a4d"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-0e7825edf67b1a2b7",
+                  "PAYG": "ami-059c34dcea589aed1"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-08937f89d8e9c7a6f",
+                  "PAYG": "ami-08b14c8f3443a9ffc"
+                }
+              },
+              "9x2x1x015": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-055ecde816c9d0bba",
+                  "METERED": "ami-0e69db24f2649d394",
+                  "PAYG": "ami-09159a85abd9a6fef"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-05c169e55499b2096",
+                  "METERED": "ami-023a18cb02cbb47a4",
+                  "PAYG": "ami-0c37c146a50905544"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-0e247a0268ba6224d",
+                  "METERED": "ami-02e79ef236d3bacdf",
+                  "PAYG": "ami-01529d4672372f81a"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-01559d9d0d8c0e6f5",
+                  "METERED": "ami-09947ea874bb59554",
+                  "PAYG": "ami-0d927b14da4088a85"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-0dcc8545025585a67",
+                  "METERED": "ami-0dbb74827944f6c92",
+                  "PAYG": "ami-02351e8c591389e73"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-0dcc2984dd0edc86d",
+                  "METERED": "ami-0378e9edd6ebdd83c",
+                  "PAYG": "ami-099e3a4a21178e6d8"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-04a8094c97b992298",
+                  "METERED": "ami-0271448cc8046a79e",
+                  "PAYG": "ami-0c24bde0b719cc5c2"
+                },
+                "eu-north-1": {
+                  "BYOL": "ami-9d1e97e3",
+                  "PAYG": "ami-a31a93dd"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-09c1079885e2aff87",
+                  "METERED": "ami-0496550e5a1cfb119",
+                  "PAYG": "ami-08d8351e0fa8fec07"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-0efd9cf5bab314db9",
+                  "METERED": "ami-099a80082211258c3",
+                  "PAYG": "ami-03fab0f2c8dbd3d27"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-0f858158685cb0a11",
+                  "METERED": "ami-06f9e7de43e5fabda",
+                  "PAYG": "ami-04acf8930aff03b9f"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-0af0263cde374064b",
+                  "METERED": "ami-0ae51789439b803db",
+                  "PAYG": "ami-04f987309184879d3"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-0578c2a85d3215d3e",
+                  "METERED": "ami-0edda14c8dcf03ba1",
+                  "PAYG": "ami-0fafddcbd45ac14c2"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-0c19e216f03b0bef8",
+                  "METERED": "ami-0b6ae3f9c91cebf11",
+                  "PAYG": "ami-0cf28d09572b4ad24"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-0d6e11c73a272306d",
+                  "METERED": "ami-0672b3b5a2fcb1428",
+                  "PAYG": "ami-0706237c0c67c33c7"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-0887eabcb1e6ee99e",
+                  "METERED": "ami-0aee2dacec9b4e7b5",
+                  "PAYG": "ami-0b5f438ddcac1a19e"
+                }
+              },
+              "9x2x0x020": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-0ff204c8da53c9298",
+                  "METERED": "ami-0c7adac522c97e862",
+                  "PAYG": "ami-0bae5a8125732750b"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-0d477bbeb78869163",
+                  "METERED": "ami-05b5acb44f9856517",
+                  "PAYG": "ami-0d588f6bd0cb19a36"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-0bb15b17fc1d048b6",
+                  "METERED": "ami-027714b06d5747a5b",
+                  "PAYG": "ami-0132ec30c8fa34d51"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-08d7d3eeb5c4c1e0b",
+                  "METERED": "ami-03c848482480237dc",
+                  "PAYG": "ami-0f4a83bb81e41bf39"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-08637ca0380ded00b",
+                  "METERED": "ami-0f0752729c77392fb",
+                  "PAYG": "ami-005b28992944ef920"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-0f796b87ad5f0c4a3",
+                  "METERED": "ami-0727ff789533f10e5",
+                  "PAYG": "ami-0c3604cc19555c488"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-0d3ebecf26548359d",
+                  "METERED": "ami-0465cf9381ccd5614",
+                  "PAYG": "ami-0723543624892e57c"
+                },
+                "eu-north-1": {
+                  "BYOL": "ami-139d136d",
+                  "METERED": "ami-1c9d1362",
+                  "PAYG": "ami-80810ffe"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-0ef28c6347e4c4f06",
+                  "METERED": "ami-07d5098c69dce844e",
+                  "PAYG": "ami-0da4130d96850a5ff"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-0b16e213eae7839c2",
+                  "METERED": "ami-05004f38f96ffeea7",
+                  "PAYG": "ami-0a115451576235eff"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-0e3984728b867618c",
+                  "METERED": "ami-0ca4a43abba717faf",
+                  "PAYG": "ami-0d8629958b6c8cccd"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-00d00db51568c262c",
+                  "METERED": "ami-0a9373a0ceb9344de",
+                  "PAYG": "ami-0bc427eaa44efe4c3"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-05aa8fc0f9c443ef0",
+                  "METERED": "ami-02589c1afc6dc3071",
+                  "PAYG": "ami-0ee4affec0c851bef"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-043061c2ef0113ba3",
+                  "METERED": "ami-099bec59705fd33bc",
+                  "PAYG": "ami-00263cc18d7f9ce92"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-0ea6c25fd7e8e86e2",
+                  "METERED": "ami-01af5ad6c0c899ed9",
+                  "PAYG": "ami-0eed8d2df701f62eb"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-01a65aea393ed82ed",
+                  "METERED": "ami-0b3c9a4311af4d95b",
+                  "PAYG": "ami-0fb8e1bec0069c8e3"
+                }
+              },
+              "9x1x1x016": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-91b3cd7c",
+                  "METERED": "ami-7897ee95",
+                  "PAYG": "ami-eba9d006"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-03a943a43e6fcf83f",
+                  "METERED": "ami-0d075d8e3a9624ae8",
+                  "PAYG": "ami-0e96baba8f66652de"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-045d681fc3a4d3398",
+                  "METERED": "ami-067f13c93b0afe81b",
+                  "PAYG": "ami-09c98f91856def10e"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-9dde9377",
+                  "METERED": "ami-0863f8cae927dae52",
+                  "PAYG": "ami-002f399ee3372c600"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-8a9e3ee8",
+                  "METERED": "ami-b03e9ed2",
+                  "PAYG": "ami-253d9d47"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-137ef377",
+                  "METERED": "ami-1270fd76",
+                  "PAYG": "ami-0976fb6d"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-a1212f4a",
+                  "METERED": "ami-28b0bec3",
+                  "PAYG": "ami-35b2bcde"
+                },
+                "eu-north-1": {
+                  "BYOL": "ami-3231be4c"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-0ea1aeb806229f5a0",
+                  "METERED": "ami-0c96b3564f12475f9",
+                  "PAYG": "ami-088e7e1b061717c7e"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-0ff20768",
+                  "METERED": "ami-2ddb2e4a",
+                  "PAYG": "ami-04df2a63"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-0e37ae4edf35913d7",
+                  "METERED": "ami-0f19d7c9bcc9be5ed",
+                  "PAYG": "ami-0652aa23411d4dee3"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-037889f73b2f80b2f",
+                  "METERED": "ami-0ff5578eedc552ce3",
+                  "PAYG": "ami-0075f358b2fd077ee"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-23736a5c",
+                  "METERED": "ami-08818f0279383b1e4",
+                  "PAYG": "ami-05336b562767913e7"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-05de37ed5c3728472",
+                  "METERED": "ami-0aa59afea5c48811b",
+                  "PAYG": "ami-0830e88ece1884a98"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-bdd23dde",
+                  "METERED": "ami-347d9257",
+                  "PAYG": "ami-cf7f90ac"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-16597e6e",
+                  "METERED": "ami-ad6a4cd5",
+                  "PAYG": "ami-91694fe9"
+                }
+              },
+              "9x1x1x015": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-d44ba6ab",
+                  "METERED": "ami-7445a80b",
+                  "PAYG": "ami-164aa769"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-6560c90b",
+                  "METERED": "ami-fe6fc690",
+                  "PAYG": "ami-fb6fc695"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-a0e2c2cf",
+                  "METERED": "ami-82e2c2ed",
+                  "PAYG": "ami-aae1c1c5"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-af94bcd3",
+                  "METERED": "ami-f494bc88",
+                  "PAYG": "ami-bf94bcc3"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-caf82ca8",
+                  "METERED": "ami-c0f82ca2",
+                  "PAYG": "ami-c2f82ca0"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-79cf4f1d",
+                  "METERED": "ami-5ecf4f3a",
+                  "PAYG": "ami-8fcf4feb"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-28c4e4c3",
+                  "METERED": "ami-58c2e2b3",
+                  "PAYG": "ami-89c3e362"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-aac3ebd3",
+                  "METERED": "ami-7cc3eb05",
+                  "PAYG": "ami-93c1e9ea"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-9b9270fc",
+                  "METERED": "ami-b5f113d2",
+                  "PAYG": "ami-67f01200"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-28bd0c55",
+                  "METERED": "ami-18af1e65",
+                  "PAYG": "ami-19af1e64"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-5bbeec37",
+                  "METERED": "ami-eebeec82",
+                  "PAYG": "ami-a0b9ebcc"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-1093286f",
+                  "METERED": "ami-2e902b51",
+                  "PAYG": "ami-c29e25bd"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-c3a99ba6",
+                  "METERED": "ami-23a79546",
+                  "PAYG": "ami-91aa98f4"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-38736c58",
+                  "METERED": "ami-10736c70",
+                  "PAYG": "ami-15736c75"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-c64236be",
+                  "METERED": "ami-c44236bc",
+                  "PAYG": "ami-f542368d"
+                }
+              },
+              "9x1x0x015": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-46389020",
+                  "METERED": "ami-b248ffd4",
+                  "PAYG": "ami-9d3991fb"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-70c2601e",
+                  "METERED": "ami-85fd5feb",
+                  "PAYG": "ami-fe7eda90"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-b46033db",
+                  "METERED": "ami-6b603304",
+                  "PAYG": "ami-d95d11b6"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-ce90dead",
+                  "METERED": "ami-b96c2ac5",
+                  "PAYG": "ami-87ace2e4"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-c4d831a6",
+                  "METERED": "ami-816f87e3",
+                  "PAYG": "ami-36dc3554"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-64820600",
+                  "METERED": "ami-e8de658c",
+                  "PAYG": "ami-6b1ea60f"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-f048cf9f",
+                  "METERED": "ami-ca8beea5",
+                  "PAYG": "ami-ad52d5c2"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-7256380b",
+                  "METERED": "ami-f1ba1288",
+                  "PAYG": "ami-bb5b35c2"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-56c4d832",
+                  "METERED": "ami-f8445b9c",
+                  "PAYG": "ami-5cb1ab38"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-0ab90f77",
+                  "METERED": "ami-f5b80e88",
+                  "PAYG": "ami-91bb0dec"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-dcd699b0",
+                  "METERED": "ami-36d8975a",
+                  "PAYG": "ami-2dfc8741"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-d3f042a9",
+                  "METERED": "ami-e5b2bf9f",
+                  "PAYG": "ami-d219aaa8"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-a8a590cd",
+                  "METERED": "ami-774f6112",
+                  "PAYG": "ami-e7c0ef82"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-375c6257",
+                  "METERED": "ami-6c1b220c",
+                  "PAYG": "ami-d75c62b7"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-a372f7db",
+                  "METERED": "ami-a673f6de",
+                  "PAYG": "ami-edd40095"
+                }
+              },
+              "9x1x0x003": {
+                "eu-west-1": {
+                  "BYOL": "ami-4ce10135"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-d4ffe9b0"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-4e828558"
+                }
+              },
+              "9x0x1x007": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-2221cf44",
+                  "METERED": "ami-321ef754",
+                  "PAYG": "ami-763fd110"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-a5e33acb",
+                  "METERED": "ami-f10ad39f",
+                  "PAYG": "ami-bae23bd4"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-29bec546",
+                  "METERED": "ami-818ef5ee",
+                  "PAYG": "ami-16bec579"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-c662fda5",
+                  "METERED": "ami-e247d981",
+                  "PAYG": "ami-d161feb2"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-ed928c8e",
+                  "METERED": "ami-a37e67c0",
+                  "PAYG": "ami-98908efb"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-65ec5201",
+                  "METERED": "ami-4de65829",
+                  "PAYG": "ami-7ded5319"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-e277d88d",
+                  "METERED": "ami-7117b81e",
+                  "PAYG": "ami-4978d726"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-aee91dd7",
+                  "METERED": "ami-45eb1c3c",
+                  "PAYG": "ami-9eee1ae7"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-fa27369e",
+                  "METERED": "ami-ded6c7ba",
+                  "PAYG": "ami-862b3ae2"
+                },
+                "eu-west-3": {
+                  "BYOL": "ami-18da6d65",
+                  "METERED": "ami-d0c671ad"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-831167ef",
+                  "METERED": "ami-6e562002",
+                  "PAYG": "ami-6711670b"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-d1c4e2aa",
+                  "METERED": "ami-03e4c778",
+                  "PAYG": "ami-2dc7e156"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-1d1f3f78",
+                  "METERED": "ami-64f8d801",
+                  "PAYG": "ami-dc1e3eb9"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-34a78f54",
+                  "METERED": "ami-ef7f548f",
+                  "PAYG": "ami-19a58d79"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-58d03720",
+                  "METERED": "ami-f8c32580",
+                  "PAYG": "ami-85d532fd"
+                }
+              },
+              "8x1x1x019": {
+                "ap-northeast-1": {
+                  "BYOL": "ami-8ec7e1e9",
+                  "METERED": "ami-ab95b6cc",
+                  "PAYG": "ami-f22b0995"
+                },
+                "ap-northeast-2": {
+                  "BYOL": "ami-fd865493",
+                  "METERED": "ami-34df0d5a",
+                  "PAYG": "ami-29c71547"
+                },
+                "ap-south-1": {
+                  "BYOL": "ami-51b1c23e",
+                  "METERED": "ami-6488fb0b",
+                  "PAYG": "ami-9ff083f0"
+                },
+                "ap-southeast-1": {
+                  "BYOL": "ami-994cf3fa",
+                  "METERED": "ami-d65be5b5",
+                  "PAYG": "ami-8c43fdef"
+                },
+                "ap-southeast-2": {
+                  "BYOL": "ami-2a5f5149",
+                  "METERED": "ami-41f0fe22",
+                  "PAYG": "ami-22999741"
+                },
+                "ca-central-1": {
+                  "BYOL": "ami-02fa4666",
+                  "METERED": "ami-8cef53e8",
+                  "PAYG": "ami-c0ea56a4"
+                },
+                "eu-central-1": {
+                  "BYOL": "ami-ad6cbcc2",
+                  "METERED": "ami-c06dbeaf",
+                  "PAYG": "ami-d3b260bc"
+                },
+                "eu-west-1": {
+                  "BYOL": "ami-c4dbe2a2",
+                  "METERED": "ami-00615b66",
+                  "PAYG": "ami-bf1b21d9"
+                },
+                "eu-west-2": {
+                  "BYOL": "ami-b50115d1",
+                  "METERED": "ami-fd253199",
+                  "PAYG": "ami-60203404"
+                },
+                "sa-east-1": {
+                  "BYOL": "ami-c080e3ac",
+                  "METERED": "ami-6171130d",
+                  "PAYG": "ami-0b472567"
+                },
+                "us-east-1": {
+                  "BYOL": "ami-d1ee6ec7",
+                  "METERED": "ami-1842cb0e",
+                  "PAYG": "ami-3f4dc529"
+                },
+                "us-east-2": {
+                  "BYOL": "ami-4aceea2f",
+                  "METERED": "ami-b1b195d4"
+                },
+                "us-west-1": {
+                  "BYOL": "ami-8d90caed",
+                  "METERED": "ami-c85772a8",
+                  "PAYG": "ami-d22005b2"
+                },
+                "us-west-2": {
+                  "BYOL": "ami-1aa7317a",
+                  "METERED": "ami-3275e552",
+                  "PAYG": "ami-0b0f9f6b"
+                }
+              }
+    },
+
+    "Resources": {
+      "myVPC": {
+        "Type": "AWS::EC2::VPC",
+        "Properties": {
+          "CidrBlock": {
+            "Ref": "VpcCIDR"
+          },
+          "EnableDnsSupport": "true",
+          "EnableDnsHostnames": "true",
+          "Tags": [ 
+            {
+               "Key": "Name",
+               "Value": { 
+                       "Fn::Join": [
+                         "", [ { "Ref": "Prefix" }, "-VPC"  ]
+                       ]
+               }
+            }
+          ]
+        }
+      },
+      "mySubnet": {
+        "Type": "AWS::EC2::Subnet",
+        "Properties": {
+          "VpcId": {
+            "Ref": "myVPC"
+          },
+          "CidrBlock": {
+            "Ref": "subNetCIDR"
+          },
+          "AvailabilityZone": {
+            "Ref": "subnetAZ"
+          },
+          "Tags": [
+            {
+               "Key": "Name",
+               "Value": { 
+                 "Fn::Join": [
+                   "", [ { "Ref": "Prefix" }, "-Subnet"  ]
+                  ]
+               }
+            }
+          ]
+        }
+      },
+      "myRouteTable": {
+        "Type": "AWS::EC2::RouteTable",
+        "Properties": {
+          "VpcId": {
+            "Ref": "myVPC"
+          },
+          "Tags": [
+            {
+               "Key": "Name",
+               "Value": { 
+                 "Fn::Join": [
+                   "", [ { "Ref": "Prefix" }, "-RouteTable"  ]
+                  ]
+               }
+            }
+          ]
+        }
+      },
+      "myInternetGateway": {
+        "Type": "AWS::EC2::InternetGateway",
+        "Properties": {
+          "Tags": [
+            {
+               "Key": "Name",
+               "Value": { 
+                 "Fn::Join": [
+                   "", [ { "Ref": "Prefix" }, "-IGW"  ]
+                  ]
+               }
+            }
+          ]
+        }
+      },
+      "InternetGatewayAttachment": {
+        "Type": "AWS::EC2::VPCGatewayAttachment",
+        "DependsOn" : "myInternetGateway",
+        "Properties": {
+          "VpcId": {
+            "Ref": "myVPC"
+          },
+          "InternetGatewayId": {
+            "Ref": "myInternetGateway"
+          }
+        }
+      },
+      "myRoute" : {
+         "Type" : "AWS::EC2::Route",
+         "DependsOn" : "InternetGatewayAttachment",
+         "Properties" : {
+          "RouteTableId" : { "Ref" : "myRouteTable" },
+          "DestinationCidrBlock" : "0.0.0.0/0",
+          "GatewayId" : { "Ref" : "myInternetGateway" }
+         }
+      },
+      "mySubnetRouteTableAssociation": {
+        "Type": "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties": {
+          "SubnetId": {
+            "Ref": "mySubnet"
+          },
+          "RouteTableId": {
+            "Ref": "myRouteTable"
+          }
+        }
+      },
+
+      "WafEIP": {
+            "Type": "AWS::EC2::EIP",
+            "Properties": {
+                "Domain": "vpc"
+            }
+      },
+      "WafEIPAssoc": {
+            "Type": "AWS::EC2::EIPAssociation",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::GetAtt": [
+                        "WafEIP",
+                        "AllocationId"
+                    ]
+                },
+                "InstanceId": {
+                    "Ref": "instanceWAF1"
+                }
+            }
+      },
+      "BWAFsecGroup": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupDescription": "Security rule group for the Barracuda WAF",
+          "VpcId": {
+            "Ref": "myVPC"
+          },
+          "Tags": [
+            {
+               "Key": "Name",
+               "Value": { 
+                 "Fn::Join": [
+                   "", [ { "Ref": "Prefix" }, "-BWAFSecGroup"  ]
+                  ]
+               }
+            }
+          ]
+        }
+      },
+      "BWAFsecRule1": {
+        "Type": "AWS::EC2::SecurityGroupIngress",
+        "Properties": {
+          "GroupId": {
+            "Ref": "BWAFsecGroup"
+          },
+          "IpProtocol": "tcp",
+          "FromPort": "8000",
+          "ToPort": "8000",
+          "CidrIp": {
+            "Ref": "secGroupSrcCIDR"
+          }
+        }
+      },
+      "BWAFsecRule2": {
+        "Type": "AWS::EC2::SecurityGroupIngress",
+        "Properties": {
+          "GroupId": {
+            "Ref": "BWAFsecGroup"
+          },
+          "IpProtocol": "tcp",
+          "FromPort": "8443",
+          "ToPort": "8443",
+          "CidrIp": {
+            "Ref": "secGroupSrcCIDR"
+          }
+        }
+      },
+      "BWAFsecRule3": {
+        "Type": "AWS::EC2::SecurityGroupIngress",
+        "Properties": {
+          "GroupId": {
+            "Ref": "BWAFsecGroup"
+          },
+          "IpProtocol": "tcp",
+          "FromPort": "80",
+          "ToPort": "80",
+          "CidrIp": {
+            "Ref": "secGroupSrcCIDR"
+          }
+        }
+      },
+      "BWAFsecRule4": {
+        "Type": "AWS::EC2::SecurityGroupIngress",
+        "Properties": {
+          "GroupId": {
+            "Ref": "BWAFsecGroup"
+          },
+          "IpProtocol": "tcp",
+          "FromPort": "443",
+          "ToPort": "443",
+          "CidrIp": {
+            "Ref": "secGroupSrcCIDR"
+          }
+        }
+      },
+      "BWAFsecRule5": {
+        "Type": "AWS::EC2::SecurityGroupIngress",
+        "Properties": {
+          "GroupId": {
+            "Ref": "BWAFsecGroup"
+          },
+          "IpProtocol": "tcp",
+          "FromPort": "8080",
+          "ToPort": "8080",
+          "CidrIp": {
+            "Ref": "secGroupSrcCIDR"
+          }
+        }
+    },
+
+     "instanceWAF1": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+              "InstanceType": {
+                "Ref": "InstanceType"
+              },
+              "ImageId": {
+                "Fn::FindInMap": [
+                    {
+                        "Fn::FindInMap": [
+                            "amiMapMap",
+                            {
+                                "Ref": "ReleaseVersion"
+                            },
+                            "mapName"
+                        ]
+                    },
+                    {
+                        "Ref": "AWS::Region"
+                    },
+                    {
+                        "Ref": "LicenceMode"
+                    }
+                ]
+              },
+              "Monitoring": false,
+              "SourceDestCheck": false,
+              "NetworkInterfaces": [
+                {
+                    "DeleteOnTermination": true,
+                    "Description": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "NIC WAF ",
+                                {
+                                    "Ref": "Prefix"
+                                }
+                            ]
+                        ]
+                    },
+                    "DeviceIndex": "0",
+                    "SubnetId": {
+                        "Ref": "mySubnet"
+                    },
+                    "GroupSet": [
+                        {
+                          "Fn::GetAtt": [
+                            "BWAFsecGroup",
+                            "GroupId"
+                          ]
+                        }
+                    ],
+                    "AssociatePublicIpAddress": true
+                   }
+                ],
+                "Tags": [
+                  {
+                    "Key": "Name",
+                    "Value": { 
+                      "Fn::Join": [
+                        "", [ { "Ref": "Prefix" }, "-WAF"  ]
+                       ]
+                    }
+                  },
+                  {
+                    "Key": "TemplateName",
+                    "Value": {
+                        "Ref": "Prefix"
+                    }
+                  }
+                ]
+            }
+        }
+      },
+
+
+      "Outputs": {
+        "WAFPublicIP": {
+            "Description": "Public IP address of the WAF",
+            "Value": {
+                "Ref": "WafEIP"
+            }
+        },
+        "InitialPassword": {
+            "Description": "Initial password for WAF admin",
+            "Value": {
+                "Ref": "instanceWAF1"
+            }
+        }
+      }
+}
